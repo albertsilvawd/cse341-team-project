@@ -119,13 +119,31 @@ const hookStationInfo = () => {
                 const payload = await response.json();
                 const station = payload.station;
 
-                detailsEl.innerHTML = `
-                    <strong>${station.name}</strong>
-                    <p>${station.description}</p>
-                    <p><strong>Prefecture:</strong> ${station.prefecture}</p>
-                    <p><strong>Region:</strong> ${station.region}</p>
-                    <p><strong>Facilities:</strong> ${station.facilities.join(', ')}</p>
-                `;
+                detailsEl.replaceChildren();
+
+                const nameEl = document.createElement('strong');
+                nameEl.textContent = station.name;
+
+                const descriptionEl = document.createElement('p');
+                descriptionEl.textContent = station.description;
+
+                const prefectureEl = document.createElement('p');
+                prefectureEl.textContent = `Prefecture: ${station.prefecture}`;
+
+                const regionEl = document.createElement('p');
+                regionEl.textContent = `Region: ${station.region}`;
+
+                const facilitiesEl = document.createElement('p');
+                facilitiesEl.textContent = `Facilities: ${station.facilities.join(', ')}`;
+
+                detailsEl.append(
+                    nameEl,
+                    descriptionEl,
+                    prefectureEl,
+                    regionEl,
+                    facilitiesEl
+                );
+
 
                 detailsEl.hidden = false;
             } catch (error) {
