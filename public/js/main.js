@@ -10,7 +10,7 @@ const hookRegionSorter = () => {
             } else {
                 url.searchParams.delete('region');
             }
-            
+
             window.location.href = url.toString();
         });
     }
@@ -28,7 +28,7 @@ const hookSeasonSorter = () => {
             } else {
                 url.searchParams.delete('season');
             }
-            
+
             window.location.href = url.toString();
         });
     }
@@ -88,8 +88,79 @@ const hookTrainsCatalog = async () => {
     }
 };
 
+const hookStationInfo = () => {
+    const stationButtons = document.querySelectorAll('.station-info-btn');
+
+    stationButtons.forEach((button) => {
+        button.addEventListener('click', async () => {
+            const stationId = button.dataset.stationId;
+            const detailsEl = document.querySelector(
+                `[data-station-details="${stationId}"]`
+            );
+
+            if (!detailsEl) {
+                return;
+            }
+
+            if (!detailsEl.hidden) {
+                detailsEl.hidden = true;
+                return;
+            }
+
+            try {
+                button.disabled = true;
+
+                const response = await fetch(`/api/stations/${stationId}`);
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load station (${response.status})`);
+                }
+
+                const payload = await response.json();
+                const station = payload.station;
+
+                detailsEl.replaceChildren();
+
+                const nameEl = document.createElement('strong');
+                nameEl.textContent = station.name;
+
+                const descriptionEl = document.createElement('p');
+                descriptionEl.textContent = station.description;
+
+                const prefectureEl = document.createElement('p');
+                prefectureEl.textContent = `Prefecture: ${station.prefecture}`;
+
+                const regionEl = document.createElement('p');
+                regionEl.textContent = `Region: ${station.region}`;
+
+                const facilitiesEl = document.createElement('p');
+                facilitiesEl.textContent = `Facilities: ${station.facilities.join(', ')}`;
+
+                detailsEl.append(
+                    nameEl,
+                    descriptionEl,
+                    prefectureEl,
+                    regionEl,
+                    facilitiesEl
+                );
+
+
+                detailsEl.hidden = false;
+            } catch (error) {
+                detailsEl.textContent =
+                    'Unable to load station information right now.';
+                detailsEl.hidden = false;
+            } finally {
+                button.disabled = false;
+            }
+        });
+    });
+};
+
+
 document.addEventListener('DOMContentLoaded', () => {
     hookRegionSorter();
     hookSeasonSorter();
     hookTrainsCatalog();
+    hookStationInfo();
 });
