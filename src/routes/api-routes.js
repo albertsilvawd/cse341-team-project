@@ -15,7 +15,18 @@ router.get('/stations', getAllStationsApi);
 // Get a station by ID
 router.get('/stations/:id', getStationByIdApi);
 
-// Get all bookings
+/**
+ * @openapi
+ * /api/bookings:
+ *   get:
+ *     summary: Get all bookings
+ *     tags: [Bookings]
+ *     responses:
+ *       200:
+ *         description: A list of bookings
+ *       500:
+ *         description: Server error
+ */
 router.get('/bookings', getAllBookingsApi);
 
 export default router;
