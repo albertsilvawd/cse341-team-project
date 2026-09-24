@@ -1,0 +1,64 @@
+<%- include('partials/header') %>
+
+  <section class="content">
+    <h1>Bookings</h1>
+
+    <div id="bookings-container">
+      <p>Loading bookings...</p>
+    </div>
+  </section>
+
+  <script>
+    const bookingsContainer = document.getElementById('bookings-container');
+
+    const loadBookings = async () => {
+      try {
+        const response = await fetch('/api/bookings');
+
+        if (!response.ok) {
+          throw new Error('Failed to load bookings');
+        }
+
+        const data = await response.json();
+
+        if (data.bookings.length === 0) {
+          bookingsContainer.innerHTML = '<p>No bookings found.</p>';
+          return;
+        }
+
+        bookingsContainer.innerHTML = data.bookings.map((booking) => `
+                <article>
+                    <h2>Booking ${booking.id}</h2>
+                    <p><strong>Trip:</strong> ${booking.tripId}</p>
+                    <p><strong>Schedule:</strong> ${booking.scheduleId}</p>
+                    <p><strong>Ticket Class:</strong> ${booking.ticketClass}</p>
+                    <p><strong>Selected Day:</strong> ${booking.selectedDay}</p>
+
+                    <h3>Passengers</h3>
+                    <ul>
+                        ${booking.passengers.map((passenger) => `
+                            <li>
+                                ${passenger.firstName} ${passenger.lastName}
+                                - ${passenger.email}
+                                - ${passenger.phone}
+                            </li>
+                        `).join('')}
+                    </ul>
+
+                    <p>
+                        <strong>Created:</strong>
+                        ${new Date(booking.createdAt).toLocaleString()}
+                    </p>
+                </article>
+            `).join('');
+      } catch (error) {
+        console.error(error);
+        bookingsContainer.innerHTML =
+          '<p>Unable to load bookings.</p>';
+      }
+    };
+
+    loadBookings();
+  </script>
+
+  <%- include('partials/footer') %>
