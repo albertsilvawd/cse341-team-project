@@ -3,13 +3,16 @@ import {
     getAllStationsApi,
     getStationByIdApi
 } from '../controllers/stations.js';
+import { getTripById, getAllTrips } from '../controllers/trips.js';
 
 const router = Router();
 
-// Get all stations
+// Stations
 router.get('/stations', getAllStationsApi);
-
-// Get a station by ID
 router.get('/stations/:id', getStationByIdApi);
+
+// Trips
+router.get('/trips', getAllTrips);
+router.get('/trips/:id', getTripById);
 
 export default router;
