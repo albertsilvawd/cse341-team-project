@@ -151,14 +151,55 @@ article.route-detail {
                         letter-spacing: 0.05em;
                     }
 
+                    .station-name-row {
+                        display: flex;
+                        align-items: center;
+                        gap: var(--space-sm);
+                    }
+
                     .station-name {
                         font-size: var(--font-size-lg);
                         font-weight: 500;
                         color: var(--clr-primary);
                     }
+
+                    .station-info-btn {
+                        border: 1px solid var(--clr-border);
+                        background-color: var(--clr-surface);
+                        color: var(--clr-primary);
+                        border-radius: 50%;
+                        width: 28px;
+                        height: 28px;
+                        cursor: pointer;
+                        font-weight: 700;
+                    }
+
+                    .station-info-btn:hover {
+                        background-color: var(--clr-primary-pale);
+                    }
+
+                    .station-info-btn:disabled {
+                        cursor: wait;
+                        opacity: 0.6;
+                    }
+
+                    .station-details {
+                        margin-top: var(--space-sm);
+                        padding: var(--space-md);
+                        background-color: var(--clr-primary-pale);
+                        border: 1px solid var(--clr-border-light);
+                        border-radius: var(--radius-md);
+                        color: var(--clr-text-secondary);
+                        font-size: var(--font-size-sm);
+                    }
+
+                    .station-details p {
+                        margin: var(--space-xs) 0;
+                    }
                 }
             }
         }
+
 
         .route-operating {
 
