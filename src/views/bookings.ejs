@@ -1,27 +1,59 @@
 <%- include('partials/header') %>
 
-  <section class="content">
-    <h1>Bookings</h1>
+  <main class="content-grid bookings-admin-page">
+    <header class="bookings-header">
+      <h1>Bookings</h1>
+      <p>View current trip bookings and passenger information.</p>
+    </header>
 
-    <div id="bookings-container">
-      <p id="bookings-loading">Loading bookings...</p>
-      <p id="bookings-error" hidden></p>
-    </div>
-  </section>
+    <section class="bookings-section" aria-labelledby="bookings-title">
+      <h2 id="bookings-title" class="section-title">Booking Records</h2>
+
+      <div id="bookings-container" class="bookings-list">
+        <p id="bookings-loading">Loading bookings...</p>
+        <p id="bookings-error" hidden></p>
+      </div>
+    </section>
+
+  </main>
 
   <template id="booking-card-template">
-    <article>
-      <h2 data-field="booking-id"></h2>
-      <p data-field="trip"></p>
-      <p data-field="schedule"></p>
-      <p data-field="ticket-class"></p>
-      <p data-field="selected-day"></p>
+    <article class="booking-card">
+      <header class="booking-card-header">
+        <div>
+          <p class="booking-label">Booking Reference</p>
+          <h3 data-field="booking-id"></h3>
+        </div>
+      </header>
 
-      <h3>Passengers</h3>
-      <ul data-field="passengers"></ul>
+      <div class="booking-details">
+        <div class="detail-item">
+          <span class="detail-label">Trip</span>
+          <span class="detail-value" data-field="trip"></span>
+        </div>
 
-      <p data-field="created"></p>
+        <div class="detail-item">
+          <span class="detail-label">Ticket Class</span>
+          <span class="detail-value" data-field="ticket-class"></span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Selected Day</span>
+          <span class="detail-value" data-field="selected-day"></span>
+        </div>
+      </div>
+
+      <section class="passengers-section">
+        <h4>Passengers</h4>
+        <ul class="passengers-list" data-field="passengers"></ul>
+      </section>
+
+      <footer class="booking-card-footer">
+        <span class="detail-label">Created</span>
+        <span class="detail-value" data-field="created"></span>
+      </footer>
     </article>
+
   </template>
 
   <%- include('partials/footer') %>

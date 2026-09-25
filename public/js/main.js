@@ -166,6 +166,12 @@ const hookBookingsCatalog = async () => {
         return;
     }
 
+    const formatBookingValue = (value) => {
+        return String(value)
+            .replace(/[-_]/g, ' ')
+            .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    };
+
     try {
         const response = await fetch('/api/bookings');
 
@@ -175,6 +181,11 @@ const hookBookingsCatalog = async () => {
 
         const payload = await response.json();
         const bookings = payload.bookings || [];
+
+        bookings.sort((a, b) => {
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
         const fragment = document.createDocumentFragment();
 
         if (bookings.length === 0) {
@@ -184,22 +195,19 @@ const hookBookingsCatalog = async () => {
                 const card = templateEl.content.cloneNode(true);
 
                 card.querySelector('[data-field="booking-id"]').textContent =
-                    `Booking ${booking.id}`;
+                    booking.id;
 
                 card.querySelector('[data-field="trip"]').textContent =
-                    `Trip: ${booking.tripId}`;
-
-                card.querySelector('[data-field="schedule"]').textContent =
-                    `Schedule: ${booking.scheduleId}`;
+                    formatBookingValue(booking.tripId);
 
                 card.querySelector('[data-field="ticket-class"]').textContent =
-                    `Ticket Class: ${booking.ticketClass}`;
+                    formatBookingValue(booking.ticketClass);
 
                 card.querySelector('[data-field="selected-day"]').textContent =
-                    `Selected Day: ${booking.selectedDay}`;
+                    formatBookingValue(booking.selectedDay);
 
                 card.querySelector('[data-field="created"]').textContent =
-                    `Created: ${new Date(booking.createdAt).toLocaleString()}`;
+                    new Date(booking.createdAt).toLocaleString();
 
                 const passengersEl = card.querySelector(
                     '[data-field="passengers"]'
