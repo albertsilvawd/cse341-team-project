@@ -4,61 +4,24 @@
     <h1>Bookings</h1>
 
     <div id="bookings-container">
-      <p>Loading bookings...</p>
+      <p id="bookings-loading">Loading bookings...</p>
+      <p id="bookings-error" hidden></p>
     </div>
   </section>
 
-  <script>
-    const bookingsContainer = document.getElementById('bookings-container');
+  <template id="booking-card-template">
+    <article>
+      <h2 data-field="booking-id"></h2>
+      <p data-field="trip"></p>
+      <p data-field="schedule"></p>
+      <p data-field="ticket-class"></p>
+      <p data-field="selected-day"></p>
 
-    const loadBookings = async () => {
-      try {
-        const response = await fetch('/api/bookings');
+      <h3>Passengers</h3>
+      <ul data-field="passengers"></ul>
 
-        if (!response.ok) {
-          throw new Error('Failed to load bookings');
-        }
-
-        const data = await response.json();
-
-        if (data.bookings.length === 0) {
-          bookingsContainer.innerHTML = '<p>No bookings found.</p>';
-          return;
-        }
-
-        bookingsContainer.innerHTML = data.bookings.map((booking) => `
-                <article>
-                    <h2>Booking ${booking.id}</h2>
-                    <p><strong>Trip:</strong> ${booking.tripId}</p>
-                    <p><strong>Schedule:</strong> ${booking.scheduleId}</p>
-                    <p><strong>Ticket Class:</strong> ${booking.ticketClass}</p>
-                    <p><strong>Selected Day:</strong> ${booking.selectedDay}</p>
-
-                    <h3>Passengers</h3>
-                    <ul>
-                        ${booking.passengers.map((passenger) => `
-                            <li>
-                                ${passenger.firstName} ${passenger.lastName}
-                                - ${passenger.email}
-                                - ${passenger.phone}
-                            </li>
-                        `).join('')}
-                    </ul>
-
-                    <p>
-                        <strong>Created:</strong>
-                        ${new Date(booking.createdAt).toLocaleString()}
-                    </p>
-                </article>
-            `).join('');
-      } catch (error) {
-        console.error(error);
-        bookingsContainer.innerHTML =
-          '<p>Unable to load bookings.</p>';
-      }
-    };
-
-    loadBookings();
-  </script>
+      <p data-field="created"></p>
+    </article>
+  </template>
 
   <%- include('partials/footer') %>
