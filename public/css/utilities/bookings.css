@@ -60,7 +60,7 @@
         .booking-label {
           margin: 0 0 var(--space-xs) 0;
           font-size: var(--font-size-xs);
-          color: var(--clr-text-muted);
+          color: var(--clr-text-secondary);
           text-transform: uppercase;
           letter-spacing: 0.05em;
           font-weight: 500;
@@ -69,7 +69,7 @@
         h3 {
           margin: 0;
           font-size: var(--font-size-xl);
-          color: var(--clr-primary);
+          color: var(--clr-text-primary);
           letter-spacing: 0.05em;
         }
       }
@@ -191,5 +191,4 @@
       }
     }
   }
-
 }
