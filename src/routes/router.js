@@ -2,7 +2,7 @@ import railTripsRouter from './trips.js';
 import { trainsApi, trainsPage } from './trains.js';
 import { Router } from 'express';
 import { homePage, aboutPage, testErrorPage } from './index.js';
-import apiRouter from './api-routes.js';
+import apiRoutes from './api-routes.js';
 import ejsRoutes from './ejs-routes.js';
 
 const router = Router();
@@ -19,13 +19,13 @@ router.get('/trains', trainsPage);
 // Trains API
 router.get('/api/trains', trainsApi);
 
-// Station APIs
-router.use('/api', apiRouter);
+// Stations + Trips API
+router.use('/api', apiRoutes);
 
-// Auth pages (register, login, logout, admin dashboard)
+// Auth pages (register, login, logout, admin dashboard) + Trips list/details pages
 router.use(ejsRoutes);
 
-// Rail trips
+// Rail trips (booking/confirmation)
 router.use('/trips', railTripsRouter);
 
 // Test 500 error page
