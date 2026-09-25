@@ -4,15 +4,14 @@ import {
     getAllStationsApi,
     getStationByIdApi
 } from '../controllers/stations.js';
+import { getTripById, getAllTrips } from '../controllers/trips.js';
 
 import { getAllBookingsApi } from '../controllers/bookings.js';
 
 const router = Router();
 
-// Get all stations
+// Stations
 router.get('/stations', getAllStationsApi);
-
-// Get a station by ID
 router.get('/stations/:id', getStationByIdApi);
 
 /**
@@ -28,5 +27,8 @@ router.get('/stations/:id', getStationByIdApi);
  *         description: Server error
  */
 router.get('/bookings', getAllBookingsApi);
+// Trips
+router.get('/trips', getAllTrips);
+router.get('/trips/:id', getTripById);
 
 export default router;
