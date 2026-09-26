@@ -2,7 +2,8 @@ import railTripsRouter from './trips.js';
 import { trainsApi, trainsPage } from './trains.js';
 import { Router } from 'express';
 import { homePage, aboutPage, testErrorPage } from './index.js';
-import apiRoutes from './api-routes.js';
+import apiRouter from './api-routes.js';
+import { bookingsAdminPage } from '../controllers/bookings.js';
 import ejsRoutes from './ejs-routes.js';
 
 const router = Router();
@@ -20,7 +21,10 @@ router.get('/trains', trainsPage);
 router.get('/api/trains', trainsApi);
 
 // Stations + Trips API
-router.use('/api', apiRoutes);
+router.use('/api', apiRouter);
+
+// Bookings admin page
+router.get('/bookings-admin', bookingsAdminPage);
 
 // Trips list/details pages
 router.use(ejsRoutes);
