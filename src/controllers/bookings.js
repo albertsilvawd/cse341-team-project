@@ -16,9 +16,21 @@ const bookingPage = async (req, res, next) => {
       id: Number(scheduleId)
     });
 
+    if (!schedule) {
+      return res.status(404).render('errors/404', {
+        title: 'Schedule Not Found'
+      });
+    }
+
     const trip = await db.collection('trips').findOne({
       id: schedule.tripId
     });
+
+    if (!trip) {
+      return res.status(404).render('errors/404', {
+        title: 'Trip Not Found'
+      });
+    }
 
     const ticketClasses = await db.collection('ticketClasses').find({}).toArray();
 
