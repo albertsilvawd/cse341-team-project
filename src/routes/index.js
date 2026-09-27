@@ -6,14 +6,11 @@ const aboutPage = (req, res) => {
     res.render('about', { title: 'About' });
 };
 
-const dashboardPage = (req, res) => {
-    res.render('dashboard', { title: 'User Dashboard', user: res.locals.user });
-};
-
 const testErrorPage = (req, res, next) => {
     const err = new Error('This is a test error so you can see what it looks like.');
     err.status = 500;
     next(err);
 };
 
-export { homePage, aboutPage, dashboardPage, testErrorPage };
+export { homePage, aboutPage, testErrorPage };
+

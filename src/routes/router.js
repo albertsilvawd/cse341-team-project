@@ -2,6 +2,7 @@ import railTripsRouter from './trips.js';
 import { trainsApi, trainsPage } from './trains.js';
 import { Router } from 'express';
 import { homePage, aboutPage, dashboardPage, testErrorPage } from './index.js';
+import { dashboardPage } from '../controllers/dashboard.js';
 
 const router = Router();
 
