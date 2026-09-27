@@ -1,0 +1,28 @@
+<%- include('partials/header') %>
+    <h1>Login</h1>
+
+    <% if (error) { %>
+        <p class="form-error">
+            <%= error %>
+        </p>
+        <% } %>
+
+            <% if (query.registered==='true' ) { %>
+                <p class="form-success">Account created! You can log in now.</p>
+                <% } %>
+
+                    <form method="POST" action="/login">
+                        <label>
+                            Email
+                            <input type="email" name="email" required>
+                        </label>
+                        <label>
+                            Password
+                            <input type="password" name="password" required>
+                        </label>
+                        <button type="submit">Login</button>
+                    </form>
+
+                    <p>Don't have an account? <a href="/register">Register</a></p>
+
+                    <%- include('partials/footer') %>
