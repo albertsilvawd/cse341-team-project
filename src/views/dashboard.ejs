@@ -1,0 +1,30 @@
+<%- include('partials/header') %>
+
+    <main class="dashboard content-grid">
+        <div class="content">
+            <h1>User Dashboard</h1>
+            <section class="dashboard-welcome">
+                <h2>Welcome, <%= user.displayName %>!</h2>
+            </section>
+
+            <section class="dashboard-bookings">
+                <h2>My Bookings</h2>
+
+                <div id="bookings-message">Loading your bookings...</div>
+                <div id="bookings-list"></div>
+            </section>
+
+            <section class="dashboard-links">
+                <h2>Quick Links</h2>
+
+                <ul>
+                    <li><a href="/bookings">Booking Admin</a></li>
+                    <li><a href="/users">User Admin</a></li>
+                </ul>
+            </section>
+        </div>
+
+    </main>
+    <script src="/js/dashboard.js"></script>
+
+    <%- include('partials/footer') %>

@@ -24,9 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         message.textContent = '';
-
         bookingsList.innerHTML = '';
-
 
         bookings.forEach((booking) => {
             const bookingElement = document.createElement('article');

@@ -6,6 +6,9 @@ import pkg from './package.json' with { type: 'json' };
 import globalMiddleware from './src/middleware/global.js';
 import { loadSessionUser } from './src/middleware/auth.js';
 import routes from './src/routes/router.js';
+import ejsRoutes from './src/routes/ejs-routes.js';
+import apiRoutes from './src/routes/api-routes.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = Path.dirname(__filename);
@@ -41,6 +44,9 @@ app.use(loadSessionUser);
 
 app.use(globalMiddleware);
 app.use('/', routes);
+app.use('/', ejsRoutes);
+app.use('/api', apiRoutes);
+
 
 // Catch requests that did not match a route.
 app.use((req, res, next) => {
@@ -51,13 +57,15 @@ app.use((req, res, next) => {
 
 // Render the appropriate error page.
 app.use((err, req, res, next) => {
+    console.error('SERVER ERROR:', err);
     const status = err.status || 500;
     const templatesByStatus = { 404: '404', 403: '403' };
     const template = templatesByStatus[status] || '500';
     const context = {
         title: status === 404 ? 'Page Not Found' : status === 403 ? 'Access Denied' : 'Server Error',
         error: err.message,
-        stack: err.stack
+        stack: err.stack,
+        user: req.user
     };
 
     return res.status(status).render(`errors/${template}`, context);
