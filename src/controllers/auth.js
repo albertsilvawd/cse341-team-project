@@ -61,10 +61,11 @@ export async function login(req, res, next) {
             });
         }
 
-        req.session.user = {
+       req.session.user = {
             id: user._id.toString(),
             username: user.username,
             displayName: user.displayName,
+            email: user.email,
             role: user.role.name
         };
 
