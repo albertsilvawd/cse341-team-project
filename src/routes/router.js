@@ -1,7 +1,7 @@
 import railTripsRouter from './trips.js';
 import { trainsApi, trainsPage } from './trains.js';
 import { Router } from 'express';
-import { homePage, aboutPage, testErrorPage } from './index.js';
+import { homePage, aboutPage, dashboardPage, testErrorPage } from './index.js';
 
 const router = Router();
 
@@ -10,6 +10,9 @@ router.get('/', homePage);
 
 // About page
 router.get('/about', aboutPage);
+
+// User dashboard
+router.get('/dashboard', dashboardPage);
 
 // Trains page
 router.get('/trains', trainsPage);
@@ -22,5 +25,6 @@ router.use('/trips', railTripsRouter);
 
 // Test 500 error page
 router.get('/500', testErrorPage);
+
 
 export default router;

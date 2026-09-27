@@ -1,0 +1,20 @@
+.dashboard {
+    padding: 2rem 0;
+}
+
+.dashboard-welcome,
+.dashboard-bookings,
+.dashboard-links {
+    margin-bottom: 2rem;
+}
+
+.dashboard-bookings article {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.dashboard-links ul {
+    padding-left: 1.5rem;
+}
