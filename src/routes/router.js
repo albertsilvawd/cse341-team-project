@@ -22,7 +22,7 @@ router.get('/api/trains', trainsApi);
 // Stations + Trips API
 router.use('/api', apiRoutes);
 
-// Trips list/details pages
+// Auth pages (register, login, logout, admin dashboard) + Trips list/details pages
 router.use(ejsRoutes);
 
 // Rail trips (booking/confirmation)

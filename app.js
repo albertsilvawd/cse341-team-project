@@ -1,8 +1,10 @@
 import express from 'express';
+import session from 'express-session';
 import Path from 'path';
 import { fileURLToPath } from 'url';
 import pkg from './package.json' with { type: 'json' };
 import globalMiddleware from './src/middleware/global.js';
+import { loadSessionUser } from './src/middleware/auth.js';
 import routes from './src/routes/router.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +27,18 @@ app.set('views', Path.join(__dirname, 'src/views'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Session must be registered before any route or middleware that reads req.session.
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    cookie: { maxAge: 60 * 60 * 1000 }
+}));
+
+// Copies the session user to req.user / res.locals.user for every request.
+app.use(loadSessionUser);
+
 app.use(globalMiddleware);
 app.use('/', routes);
 
@@ -38,9 +52,10 @@ app.use((req, res, next) => {
 // Render the appropriate error page.
 app.use((err, req, res, next) => {
     const status = err.status || 500;
-    const template = status === 404 ? '404' : '500';
+    const templatesByStatus = { 404: '404', 403: '403' };
+    const template = templatesByStatus[status] || '500';
     const context = {
-        title: status === 404 ? 'Page Not Found' : 'Server Error',
+        title: status === 404 ? 'Page Not Found' : status === 403 ? 'Access Denied' : 'Server Error',
         error: err.message,
         stack: err.stack
     };
