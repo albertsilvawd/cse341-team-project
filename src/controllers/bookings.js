@@ -3,8 +3,21 @@ import { generateConfirmationCode } from '../includes/helpers.js';
 import {
   createBooking,
   getAllBookings,
-  getBookingById
+  getBookingsByPassengerEmail,
+  getBookingById,
+  updateBooking,
+  deleteBooking
 } from '../models/bookings.js';
+
+const canAccessBooking = (booking, user) => {
+  if (user.role === 'admin') {
+    return true;
+  }
+
+  return booking.passengers.some(
+    (passenger) => passenger.email === user.email
+  );
+};
 
 const bookingPage = async (req, res, next) => {
   try {
@@ -69,9 +82,67 @@ const processBookingRequest = async (req, res, next) => {
 
 const getAllBookingsApi = async (req, res, next) => {
   try {
-    const bookings = await getAllBookings();
+    const bookings = req.user.role === 'admin'
+      ? await getAllBookings()
+      : await getBookingsByPassengerEmail(req.user.email);
 
     return res.status(200).json({ bookings });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const updateBookingApi = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await getBookingById(id);
+
+    if (!booking) {
+      return res.status(404).json({
+        message: 'Booking not found'
+      });
+    }
+
+    if (!canAccessBooking(booking, req.user)) {
+      return res.status(403).json({
+        message: 'Forbidden'
+      });
+    }
+
+    const updatedBooking = await updateBooking(id, req.body);
+
+    return res.status(200).json({
+      booking: updatedBooking
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const deleteBookingApi = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await getBookingById(id);
+
+    if (!booking) {
+      return res.status(404).json({
+        message: 'Booking not found'
+      });
+    }
+
+    if (!canAccessBooking(booking, req.user)) {
+      return res.status(403).json({
+        message: 'Forbidden'
+      });
+    }
+
+    await deleteBooking(id);
+
+    return res.status(200).json({
+      message: 'Booking deleted successfully'
+    });
   } catch (error) {
     return next(error);
   }
@@ -108,6 +179,8 @@ export {
   bookingPage,
   processBookingRequest,
   getAllBookingsApi,
+  updateBookingApi,
+  deleteBookingApi,
   bookingConfirmationPage,
   bookingsAdminPage
 };

@@ -12,9 +12,10 @@ const __dirname = Path.dirname(__filename);
 
 const app = express();
 
-// Add version info to res.locals for access in templates.
+// Add version and environment info to res.locals for access in templates.
 app.use((req, res, next) => {
     res.locals.appVersion = pkg.version;
+    res.locals.NODE_ENV = process.env.NODE_ENV?.toLowerCase() || 'production';
     next();
 });
 

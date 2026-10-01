@@ -262,9 +262,6 @@ const hookBookingsCatalog = async () => {
                 card.querySelector('[data-field="booking-id"]').textContent =
                     booking.id;
 
-                card.querySelector('[data-field="trip"]').textContent =
-                    formatBookingValue(booking.tripId);
-
                 card.querySelector('[data-field="ticket-class"]').textContent =
                     formatBookingValue(booking.ticketClass);
 
@@ -286,6 +283,103 @@ const hookBookingsCatalog = async () => {
                         `${passenger.email} - ${passenger.phone}`;
 
                     passengersEl.appendChild(passengerEl);
+                });
+
+                const bookingCard = card.querySelector('.booking-card');
+
+                const ticketClassEl = card.querySelector(
+                    '[data-field="ticket-class"]'
+                );
+
+                const updateButton = card.querySelector(
+                    '[data-action="update-booking"]'
+                );
+
+                updateButton.addEventListener('click', async () => {
+                    const currentTicketClass = booking.ticketClass;
+
+                    const newTicketClass = window.prompt(
+                        'Enter the new ticket class (First, Standard, or Premium):',
+                        formatBookingValue(currentTicketClass)
+                    );
+
+                    if (!newTicketClass) {
+                        return;
+                    }
+
+                    const ticketClassOptions = [
+                        'first',
+                        'standard',
+                        'premium'
+                    ];
+
+                    const selectedTicketClass = newTicketClass
+                        .trim()
+                        .toLowerCase();
+
+                    if (!ticketClassOptions.includes(selectedTicketClass)) {
+                        window.alert(
+                            'Please enter First, Standard, or Premium.'
+                        );
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/bookings/${booking.id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ticketClass: selectedTicketClass
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(
+                                data.message || 'Unable to update booking.'
+                            );
+                        }
+
+                        booking.ticketClass = data.booking.ticketClass;
+
+                        ticketClassEl.textContent =
+                            formatBookingValue(data.booking.ticketClass);
+                    } catch (error) {
+                        window.alert(error.message);
+                    }
+                });
+
+                const deleteButton = card.querySelector(
+                    '[data-action="delete-booking"]'
+                );
+
+                deleteButton.addEventListener('click', async () => {
+                    const confirmed = window.confirm(
+                        'Are you sure you want to delete this booking?'
+                    );
+
+                    if (!confirmed) {
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/bookings/${booking.id}`, {
+                            method: 'DELETE'
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Unable to delete booking.');
+                        }
+
+                        bookingCard.remove();
+                    } catch (error) {
+                        window.alert(error.message);
+                    }
                 });
 
                 fragment.appendChild(card);
