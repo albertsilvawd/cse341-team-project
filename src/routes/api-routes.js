@@ -32,7 +32,7 @@ router.get('/bookings', getAllBookingsApi);
  * @openapi
  * /api/trips:
  *   get:
- *     summary: Get a paginated list of trips
+ *     summary: Get a paginated, filterable list of trips
  *     tags: [Trips]
  *     parameters:
  *       - in: query
@@ -47,6 +47,21 @@ router.get('/bookings', getAllBookingsApi);
  *           type: integer
  *           default: 10
  *         description: Number of trips per page (max 50)
+ *       - in: query
+ *         name: region
+ *         schema:
+ *           type: string
+ *         description: Filter by exact region match
+ *       - in: query
+ *         name: season
+ *         schema:
+ *           type: string
+ *         description: Filter by exact bestSeason match
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         description: Keyword search, matches trip name or description (case-insensitive)
  *     responses:
  *       200:
  *         description: A page of trips with pagination metadata

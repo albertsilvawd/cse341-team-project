@@ -61,7 +61,17 @@ export async function getAllTrips(req, res) {
     }
 
     const { page, limit } = parsed;
-    const { trips, totalItems } = await findPaginatedTrips({ page, limit });
+    const region = typeof req.query.region === "string" ? req.query.region.trim() : "";
+    const season = typeof req.query.season === "string" ? req.query.season.trim() : "";
+    const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+
+    const { trips, totalItems } = await findPaginatedTrips({
+      page,
+      limit,
+      region: region || undefined,
+      season: season || undefined,
+      q: q || undefined,
+    });
     const totalPages = Math.ceil(totalItems / limit) || 1;
 
     return res.status(200).json({
