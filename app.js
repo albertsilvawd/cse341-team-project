@@ -6,6 +6,8 @@ import pkg from './package.json' with { type: 'json' };
 import globalMiddleware from './src/middleware/global.js';
 import { loadSessionUser } from './src/middleware/auth.js';
 import routes from './src/routes/router.js';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './src/swagger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = Path.dirname(__filename);
@@ -41,6 +43,9 @@ app.use(loadSessionUser);
 
 app.use(globalMiddleware);
 app.use('/', routes);
+
+// Swagger API documentation UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Catch requests that did not match a route.
 app.use((req, res, next) => {
