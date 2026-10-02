@@ -1,4 +1,17 @@
 <%- include('../partials/header') %>
+<style>
+    /* Styling for disabled/grayed-out ticket options */
+    .ticket-card.disabled {
+        opacity: 0.45;
+        filter: grayscale(80%);
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
+    .ticket-card.disabled input[type="radio"] {
+        cursor: not-allowed;
+    }
+</style>
+
 <article class="booking-page">
     <div class="route-header">
         <div class="route-header-content">
@@ -17,7 +30,7 @@
             <div class="ticket-options">
                 <% if (ticketOptions) { %>
                     <% ticketOptions.forEach((ticket, index) => { %>
-                        <label class="ticket-card" for="ticket-<%= ticket.class %>">
+                        <label class="ticket-card" id="card-<%= ticket.class %>" for="ticket-<%= ticket.class %>">
                             <input 
                                 type="radio" 
                                 name="ticketClass" 
@@ -25,7 +38,7 @@
                                 value="<%= ticket.class %>"
                                 data-name="<%= ticket.name %>"
                                 data-price="<%= ticket.price %>"
-                                <%= index === 1 ? 'checked' : '' %>
+                                <%= index === 0 ? 'checked' : '' %>
                                 required
                             >
                             <div class="ticket-content">
@@ -95,7 +108,6 @@
             </div>
 
             <div id="passengersList" class="passengers-list">
-                <!-- First passenger added by default -->
                 <div class="passenger-card" data-passenger-index="0">
                     <div class="passenger-card-header">
                         <h3 class="passenger-number">Passenger 1</h3>
@@ -196,7 +208,7 @@
     const addPassengerBtn = document.getElementById('addPassenger');
     const ticketRadios = document.querySelectorAll('input[name="ticketClass"]');
     
-    // Update summary displays
+    // Summary elements
     const selectedTicketName = document.getElementById('selectedTicketName');
     const passengerCountDisplay = document.getElementById('passengerCount');
     const pricePerTicket = document.getElementById('pricePerTicket');
@@ -293,7 +305,6 @@
 
         const removeBtn = createRemoveButton();
         passengerCard.querySelector('.passenger-card-header').appendChild(removeBtn);
-
         passengersList.appendChild(passengerCard);
         passengerCount++;
 
@@ -353,8 +364,6 @@
         
         cards.forEach((card, index) => {
             const i = card.dataset.passengerIndex ? Number(card.dataset.passengerIndex) : index;
-            
-            // 30% chance for Japanese name
             const isJapanese = Math.random() < 0.30;
             const firstName = randomItem(isJapanese ? japaneseFirstNames : westernFirstNames);
             const lastName = randomItem(isJapanese ? japaneseLastNames : westernLastNames);
@@ -371,37 +380,90 @@
             }
             if (phoneInput) {
                 if (isJapanese) {
-                    // Japanese fictional: using 0120 (toll-free, safe for testing)
                     phoneInput.value = `+81 120-${randInt(100, 999)}-${randInt(1000, 9999)}`;
                 } else if (Math.random() < 0.5) {
-                    // US fictional: 555-01xx
                     phoneInput.value = `+1 555-01${String(randInt(10, 99)).padStart(2, '0')}-${randInt(1000, 9999)}`;
                 } else {
-                    // UK fictional: 01632
                     phoneInput.value = `+44 1632 960${String(randInt(100, 999))}`;
                 }
             }
         });
-        
-        console.log(`✓ Filled ${cards.length} passenger form(s)`);
     };
 
-    // Event Listeners
+    /**
+     * Web service call to hydrate ticket options based on the chosen day
+     */
+    const updateTicketClassesForDay = async (day) => {
+        if (!day) return;
+
+        try {
+            const res = await fetch(`/api/ticket-classes?day=${encodeURIComponent(day)}`);
+            if (!res.ok) {
+                throw new Error(`Unable to fetch ticket classes: ${res.status}`);
+            }
+
+            const availableClasses = await res.json();
+            const availableKeys = availableClasses.map((item) => item.class.toLowerCase());
+
+            let currentCheckedIsDisabled = false;
+
+            ticketRadios.forEach((radio) => {
+                const cardLabel = document.getElementById(`card-${radio.value}`);
+                const isAvailable = availableKeys.includes(radio.value.toLowerCase());
+
+                if (isAvailable) {
+                    radio.disabled = false;
+                    if (cardLabel) cardLabel.classList.remove('disabled');
+                } else {
+                    radio.disabled = true;
+                    if (cardLabel) cardLabel.classList.add('disabled');
+                    if (radio.checked) {
+                        currentCheckedIsDisabled = true;
+                        radio.checked = false;
+                    }
+                }
+            });
+
+            // If the previously checked radio is now disabled, auto-select the first available one
+            if (currentCheckedIsDisabled) {
+                const firstAvailableRadio = Array.from(ticketRadios).find((r) => !r.disabled);
+                if (firstAvailableRadio) {
+                    firstAvailableRadio.checked = true;
+                    firstAvailableRadio.setAttribute('checked', 'true');
+                    ticketPrice = parseInt(firstAvailableRadio.dataset.price, 10);
+                    selectedTicketName.textContent = firstAvailableRadio.dataset.name;
+                    updateSummary();
+                }
+            }
+        } catch (error) {
+            console.error('Error hydrating ticket classes by day:', error);
+        }
+    };
+
+    // Event Listeners for Day selection
     selectedDayLabels.forEach((label) => {
         label.addEventListener('click', (e) => {
             e.preventDefault();
-            const label = e.currentTarget;
+            const clickedLabel = e.currentTarget;
 
             // Update visual and input selection
             selectedDayLabels.forEach((lbl) => {
                 lbl.classList.remove('selected');
-                lbl.querySelector('input').checked = false;
-                lbl.querySelector('input').removeAttribute('checked');
+                const inp = lbl.querySelector('input');
+                if (inp) {
+                    inp.checked = false;
+                    inp.removeAttribute('checked');
+                }
             });
 
-            label.classList.add('selected');
-            label.querySelector('input').checked = true;
-            label.querySelector('input').setAttribute('checked', true);
+            clickedLabel.classList.add('selected');
+            const activeInput = clickedLabel.querySelector('input');
+            if (activeInput) {
+                activeInput.checked = true;
+                activeInput.setAttribute('checked', 'true');
+                // Trigger dynamic web service hydration
+                updateTicketClassesForDay(activeInput.value);
+            }
         });
     });
 
@@ -417,21 +479,18 @@
 
     ticketRadios.forEach((radio) => {
         radio.addEventListener('change', (e) => {
-            e.preventDefault();
-            const selected = e.currentTarget;
+            if (e.target.disabled) return;
 
-            // Update visual and input selection
             ticketRadios.forEach((input) => {
                 input.checked = false;
                 input.removeAttribute('checked');
             });
 
-            selected.checked = true;
-            selected.setAttribute('checked', true);
+            e.target.checked = true;
+            e.target.setAttribute('checked', 'true');
 
-            // Update summary
             const ticketName = e.target.dataset.name;
-            ticketPrice = parseInt(e.target.dataset.price);
+            ticketPrice = parseInt(e.target.dataset.price, 10);
             
             selectedTicketName.textContent = ticketName;
             updateSummary();
@@ -443,14 +502,19 @@
         autoFillForm();
     });
 
-    // Initialize ticket based on default selection
-    const selectedRadio = document.querySelector('input[name="ticketClass"]:checked');
-    if (selectedRadio) {
-        const ticketName = selectedRadio.dataset.name;
-        selectedTicketName.textContent = ticketName;
-        ticketPrice = parseInt(selectedRadio.dataset.price);
+    // Initial setup on page load
+    const initialSelectedRadio = document.querySelector('input[name="ticketClass"]:checked');
+    if (initialSelectedRadio) {
+        selectedTicketName.textContent = initialSelectedRadio.dataset.name;
+        ticketPrice = parseInt(initialSelectedRadio.dataset.price, 10);
     }
     updateSummary();
+
+    // Run initial check for whatever day is currently selected
+    const initialDayInput = document.querySelector('input[name="selectedDay"]:checked');
+    if (initialDayInput) {
+        updateTicketClassesForDay(initialDayInput.value);
+    }
 </script>
 
 <%- include('../partials/footer') %>

@@ -11,6 +11,7 @@ import {
     deleteBookingApi
 } from '../controllers/bookings.js';
 import { requireApiLogin } from '../middleware/auth.js';
+import { getAllTicketClasses } from '../controllers/ticket-classes.js';
 
 const router = Router();
 
@@ -121,5 +122,7 @@ router.delete('/bookings/:id', requireApiLogin, deleteBookingApi);
 // Trips
 router.get('/trips', getAllTrips);
 router.get('/trips/:id', getTripById);
+
+router.get('/ticket-classes', getAllTicketClasses);
 
 export default router;
