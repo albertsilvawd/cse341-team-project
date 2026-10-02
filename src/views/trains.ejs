@@ -2,12 +2,11 @@
 
     <section class="trains-hero">
         <h1>Learn about our Trains</h1>
-        <p>
-            Explore the physical trains that power scenic the trips across the Kizuna Rail network.
-        </p>
+        <p> Explore the physical trains that power scenic trips across the Kizuna Rail network. </p>
     </section>
-
     <section class="trains-catalog">
+        <div class="trains-search"> <label for="train-search">Search trains</label> <input type="search"
+                id="train-search" placeholder="Search by train, operator, type, or power..." autocomplete="off"> </div>
         <div class="trains-state" id="trains-loading">Loading trains...</div>
         <div class="trains-state trains-error" id="trains-error" hidden></div>
 
@@ -18,7 +17,6 @@
             <span id="trains-page-info"></span>
             <button type="button" id="trains-next">Next</button>
         </div>
-
 
         <template id="train-card-template">
             <article class="train-card">
@@ -38,14 +36,17 @@
                         <dt>Type</dt>
                         <dd data-field="type"></dd>
                     </div>
+
                     <div class="spec-item">
                         <dt>Top Speed</dt>
                         <dd data-field="speed"></dd>
                     </div>
+
                     <div class="spec-item">
                         <dt>Capacity</dt>
                         <dd data-field="seats"></dd>
                     </div>
+
                     <div class="spec-item">
                         <dt>Power</dt>
                         <dd data-field="power"></dd>
@@ -58,6 +59,7 @@
                 </p>
             </article>
         </template>
+
     </section>
 
     <%- include('./partials/footer') %>

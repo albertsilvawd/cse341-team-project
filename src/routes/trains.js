@@ -6,9 +6,12 @@ const trainsPage = (req, res) => {
 
 const trainsApi = async (req, res) => {
     try {
-
         const page = Number.parseInt(req.query.page ?? '1', 10);
         const limit = Number.parseInt(req.query.limit ?? '10', 10);
+        const search =
+            typeof req.query.search === 'string'
+                ? req.query.search.trim()
+                : '';
 
         if (!Number.isInteger(page) || page < 1) {
             return res.status(400).json({
@@ -24,10 +27,23 @@ const trainsApi = async (req, res) => {
 
         const collection = getDb().collection('trains');
 
-        const total = await collection.countDocuments();
+        const filter = search
+            ? {
+                $or: [
+                    { name: { $regex: search, $options: 'i' } },
+                    { operator: { $regex: search, $options: 'i' } },
+                    { type: { $regex: search, $options: 'i' } },
+                    { powerSource: { $regex: search, $options: 'i' } },
+                    { bestFor: { $regex: search, $options: 'i' } },
+                    { description: { $regex: search, $options: 'i' } }
+                ]
+            }
+            : {};
+
+        const total = await collection.countDocuments(filter);
 
         const trains = await collection
-            .find({})
+            .find(filter)
             .skip((page - 1) * limit)
             .limit(limit)
             .toArray();
@@ -40,7 +56,8 @@ const trainsApi = async (req, res) => {
                 page,
                 limit,
                 total,
-                totalPages
+                totalPages,
+                search
             }
         });
     } catch (error) {
@@ -49,7 +66,6 @@ const trainsApi = async (req, res) => {
         return res.status(500).json({
             error: error instanceof Error ? error.message : String(error)
         });
-
     }
 };
 

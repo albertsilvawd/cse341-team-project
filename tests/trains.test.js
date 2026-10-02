@@ -58,7 +58,8 @@ describe('GET /api/trains', () => {
       page: 1,
       limit: 2,
       total: 4,
-      totalPages: 2
+      totalPages: 2,
+      search: ''
     });
   });
 
@@ -71,7 +72,8 @@ describe('GET /api/trains', () => {
       page: 2,
       limit: 2,
       total: 4,
-      totalPages: 2
+      totalPages: 2,
+      search: ''
     });
   });
 

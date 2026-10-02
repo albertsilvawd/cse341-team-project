@@ -9,6 +9,8 @@ const hookTrainsCatalog = async () => {
     const nextButton = document.getElementById('trains-next');
     const pageInfoEl = document.getElementById('trains-page-info');
 
+    const searchInput = document.getElementById('train-search');
+
     if (!listEl || !templateEl) {
         return;
     }
@@ -16,6 +18,7 @@ const hookTrainsCatalog = async () => {
     let currentPage = 1;
     const limit = 10;
     let totalPages = 1;
+    let currentSearch = '';
 
     const renderTrains = (trains) => {
         const fragment = document.createDocumentFragment();
@@ -27,19 +30,27 @@ const hookTrainsCatalog = async () => {
             imageEl.src = train.imageUrl;
             imageEl.alt = train.imageAlt || `${train.name} train`;
 
-            card.querySelector('[data-field="name"]').textContent = train.name;
+            card.querySelector('[data-field="name"]').textContent =
+                train.name;
+
             card.querySelector('[data-field="operator"]').textContent =
                 train.operator;
+
             card.querySelector('[data-field="type"]').textContent =
                 train.type;
+
             card.querySelector('[data-field="speed"]').textContent =
                 `${train.maxSpeedKmh} km/h`;
+
             card.querySelector('[data-field="seats"]').textContent =
                 `${train.capacity} seats`;
+
             card.querySelector('[data-field="power"]').textContent =
                 train.powerSource;
+
             card.querySelector('[data-field="description"]').textContent =
                 train.description;
+
             card.querySelector('[data-field="best-for"]').textContent =
                 train.bestFor;
 
@@ -59,15 +70,16 @@ const hookTrainsCatalog = async () => {
             return;
         }
 
-        paginationEl.hidden = false;
+        paginationEl.hidden = totalPages <= 1;
 
-        pageInfoEl.textContent = `Page ${currentPage} of ${totalPages}`;
+        pageInfoEl.textContent =
+            `Page ${currentPage} of ${totalPages}`;
 
         previousButton.disabled = currentPage <= 1;
         nextButton.disabled = currentPage >= totalPages;
     };
 
-    const loadTrains = async (page) => {
+    const loadTrains = async (page = 1) => {
         try {
             if (loadingEl) {
                 loadingEl.hidden = false;
@@ -77,8 +89,17 @@ const hookTrainsCatalog = async () => {
                 errorEl.hidden = true;
             }
 
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(limit)
+            });
+
+            if (currentSearch) {
+                params.set('search', currentSearch);
+            }
+
             const response = await fetch(
-                `/api/trains?page=${page}&limit=${limit}`
+                `/api/trains?${params.toString()}`
             );
 
             if (!response.ok) {
@@ -128,7 +149,16 @@ const hookTrainsCatalog = async () => {
         });
     }
 
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            currentSearch = searchInput.value.trim();
+            loadTrains(1);
+        });
+    }
+
     await loadTrains(1);
+
+
 };
 
 const hookTripsCatalog = async () => {
@@ -151,19 +181,27 @@ const hookTripsCatalog = async () => {
         trips.forEach((trip) => {
             const card = templateEl.content.cloneNode(true);
 
-            card.querySelector('[data-field="name"]').textContent = trip.name;
+            card.querySelector('[data-field="name"]').textContent =
+                trip.name;
+
             card.querySelector('[data-field="region"]').textContent =
                 trip.region;
+
             card.querySelector('[data-field="start-station"]').textContent =
                 trip.startStation;
+
             card.querySelector('[data-field="end-station"]').textContent =
                 trip.endStation;
+
             card.querySelector('[data-field="duration"]').textContent =
                 trip.duration;
+
             card.querySelector('[data-field="distance"]').textContent =
                 `${trip.distance}km`;
+
             card.querySelector('[data-field="season"]').textContent =
                 `Best in ${trip.bestSeason}`;
+
             card.querySelector('[data-field="description"]').textContent =
                 trip.description;
 
@@ -178,7 +216,10 @@ const hookTripsCatalog = async () => {
                 highlightsEl.appendChild(tag);
             });
 
-            const linkEl = card.querySelector('[data-field="details-link"]');
+            const linkEl = card.querySelector(
+                '[data-field="details-link"]'
+            );
+
             linkEl.href = `/trips/${trip.id}`;
 
             const cardEl = card.querySelector('.route-card');
@@ -280,10 +321,13 @@ const hookTripsCatalog = async () => {
                 'Unable to load trips right now. Please try again in a moment.';
         }
     }
+
+
 };
 
 const hookStationInfo = () => {
-    const stationButtons = document.querySelectorAll('.station-info-btn');
+    const stationButtons =
+        document.querySelectorAll('.station-info-btn');
 
     stationButtons.forEach((button) => {
         button.addEventListener('click', async () => {
@@ -356,13 +400,22 @@ const hookStationInfo = () => {
             }
         });
     });
+
+
 };
 
 const hookBookingsCatalog = async () => {
-    const listEl = document.getElementById('bookings-container');
-    const templateEl = document.getElementById('booking-card-template');
-    const loadingEl = document.getElementById('bookings-loading');
-    const errorEl = document.getElementById('bookings-error');
+    const listEl =
+        document.getElementById('bookings-container');
+
+    const templateEl =
+        document.getElementById('booking-card-template');
+
+    const loadingEl =
+        document.getElementById('bookings-loading');
+
+    const errorEl =
+        document.getElementById('bookings-error');
 
     if (!listEl || !templateEl) {
         return;
@@ -404,7 +457,9 @@ const hookBookingsCatalog = async () => {
 
                 card.querySelector(
                     '[data-field="trip"]'
-                ).textContent = formatBookingValue(booking.tripId);
+                ).textContent = formatBookingValue(
+                    booking.tripId
+                );
 
                 card.querySelector(
                     '[data-field="ticket-class"]'
@@ -459,6 +514,8 @@ const hookBookingsCatalog = async () => {
                 'Unable to load bookings right now. Please try again in a moment.';
         }
     }
+
+
 };
 
 document.addEventListener('DOMContentLoaded', () => {
