@@ -3,6 +3,8 @@ import { getDb } from "../db/connect.js";
 import {
   getTripById as findTripById,
   getAllTrips as findAllTrips,
+  updateTrip as updateTripModel,
+  deleteTrip as deleteTripModel
 } from "../models/trips.js";
 
 // API controllers
@@ -68,4 +70,74 @@ export async function tripDetailsPage(req, res) {
 
     return res.status(500).render("errors/500", { title: "Server Error" });
   }
+}
+
+/**
+ * PUT /api/trips/:id
+ * Only accessible to admins
+ */
+export async function updateTripApi(req, res) {
+  try {
+    const { id } = req.params;
+
+    // Pluck and whitelist allowable fields only
+    const allowedUpdates = {};
+    if (req.body.name !== undefined) allowedUpdates.name = req.body.name;
+    if (req.body.origin !== undefined) allowedUpdates.origin = req.body.origin;
+    if (req.body.destination !== undefined) allowedUpdates.destination = req.body.destination;
+    if (req.body.distance !== undefined) allowedUpdates.distance = Number(req.body.distance);
+    if (req.body.basePrice !== undefined) allowedUpdates.basePrice = Number(req.body.basePrice);
+    if (req.body.stations !== undefined) allowedUpdates.stations = req.body.stations;
+    if (req.body.schedules !== undefined) allowedUpdates.schedules = req.body.schedules;
+    if (req.body.description !== undefined) allowedUpdates.description = req.body.description;
+    if (req.body.isActive !== undefined) allowedUpdates.isActive = Boolean(req.body.isActive);
+
+    const updatedTrip = await updateTripModel(id, allowedUpdates);
+
+    if (!updatedTrip) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    return res.status(200).json(updatedTrip);
+  } catch (error) {
+    console.error("Error updating trip:", error);
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid trip ID format" });
+    }
+    return res.status(500).json({ message: "Internal server error while updating trip" });
+  }
+}
+
+/**
+ * DELETE /api/trips/:id
+ * Only accessible to admins
+ */
+export async function deleteTripApi(req, res) {
+  try {
+    const { id } = req.params;
+
+    const result = await deleteTripModel(id);
+
+    if (!result) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    return res.status(200).json({ message: "Trip successfully deleted" });
+  } catch (error) {
+    console.error("Error deleting trip:", error);
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid trip ID format" });
+    }
+    return res.status(500).json({ message: "Internal server error while deleting trip" });
+  }
+}
+
+/**
+ * GET /trips-admin
+ * Admin dashboard for managing trips
+ */
+export async function tripsAdminPage(req, res) {
+  return res.render("trips/admin", {
+    title: "Trip Management"
+  });
 }
