@@ -5,6 +5,7 @@ import {
     getStationByIdApi
 } from '../controllers/stations.js';
 import { getTripById, getAllTrips } from '../controllers/trips.js';
+import { getAllTicketClasses } from '../controllers/ticket-classes.js';
 
 import { getAllBookingsApi } from '../controllers/bookings.js';
 
@@ -30,5 +31,7 @@ router.get('/bookings', getAllBookingsApi);
 // Trips
 router.get('/trips', getAllTrips);
 router.get('/trips/:id', getTripById);
+
+router.get('/ticket-classes', getAllTicketClasses);
 
 export default router;
