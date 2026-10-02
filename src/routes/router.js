@@ -3,6 +3,7 @@ import { trainsApi, trainsPage } from './trains.js';
 import { Router } from 'express';
 import { homePage, aboutPage, testErrorPage } from './index.js';
 import apiRouter from './api-routes.js';
+import { requirePageLogin } from '../middleware/auth.js';
 import { bookingsAdminPage } from '../controllers/bookings.js';
 import ejsRoutes from './ejs-routes.js';
 
@@ -24,7 +25,7 @@ router.get('/api/trains', trainsApi);
 router.use('/api', apiRouter);
 
 // Bookings admin page
-router.get('/bookings-admin', bookingsAdminPage);
+router.get('/bookings-admin', requirePageLogin, bookingsAdminPage);
 
 // Auth pages (register, login, logout, admin dashboard) + Trips list/details pages
 router.use(ejsRoutes);

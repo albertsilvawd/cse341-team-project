@@ -51,7 +51,7 @@ const ticketClassSchema = new mongoose.Schema(
     }
   },
   {
-    collection: 'ticket-classes', 
+    collection: 'ticket-classes',
     timestamps: true
   }
 );
