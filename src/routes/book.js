@@ -18,7 +18,7 @@ const bookingPage = async (req, res) => {
     const ticketOptions = ticketClasses.map((ticketClass) => ({
       class: ticketClass.class,
       name: ticketClass.name,
-      price: trip ? trip.distance * ticketClass.pricePerKm : 0,
+      price: trip.distance * ticketClass.pricePerKm,
       amenities: ticketClass.amenities,
       description: ticketClass.description
     }));
