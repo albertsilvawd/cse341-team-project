@@ -57,30 +57,17 @@ router.get('/bookings', requireApiLogin, getAllBookingsApi);
  *           schema:
  *             type: object
  *             properties:
- *               scheduleId:
- *                 type: integer
- *               tripId:
- *                 type: string
  *               ticketClass:
  *                 type: string
- *               selectedDay:
- *                 type: string
- *               passengers:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     firstName:
- *                       type: string
- *                     lastName:
- *                       type: string
- *                     email:
- *                       type: string
- *                     phone:
- *                       type: string
+ *                 enum:
+ *                   - first
+ *                   - standard
+ *                   - premium
  *     responses:
  *       200:
  *         description: Booking updated successfully
+ *       400:
+ *         description: Invalid ticket class
  *       401:
  *         description: Authentication required
  *       403:

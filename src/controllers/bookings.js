@@ -110,7 +110,19 @@ const updateBookingApi = async (req, res, next) => {
       });
     }
 
-    const updatedBooking = await updateBooking(id, req.body);
+    const allowedTicketClasses = ['first', 'standard', 'premium'];
+
+    const updateData = {
+      ticketClass: req.body.ticketClass
+    };
+
+    if (!allowedTicketClasses.includes(updateData.ticketClass)) {
+      return res.status(400).json({
+        message: 'Invalid ticket class. Use first, standard, or premium.'
+      });
+    }
+
+    const updatedBooking = await updateBooking(id, updateData);
 
     return res.status(200).json({
       booking: updatedBooking
