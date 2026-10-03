@@ -7,8 +7,8 @@ import {
 import { getTripById, getAllTrips, updateTripApi, deleteTripApi } from '../controllers/trips.js';
 import { getAllTicketClasses } from '../controllers/ticket-classes.js';
 
-import { getAllBookingsApi } from '../controllers/bookings.js';
-import { requireApiRole } from '../middleware/auth.js';
+import { getAllBookingsApi, updateBookingApi, deleteBookingApi } from '../controllers/bookings.js';
+import { requireApiRole, requireApiLogin } from '../middleware/auth.js';
 
 const router = Router();
  
