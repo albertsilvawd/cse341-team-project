@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+
+<main class="container">
+  <h1>Trip Management (Admin)</h1>
+  
+  <p id="trip-feedback" role="status" aria-live="polite"></p>
+
+  <div id="trips-admin-list" class="trips-grid">
+    <p>Loading trips...</p>
+  </div>
+</main>
+
+<!-- Normal Display Card Template -->
+<template id="trip-card-template">
+  <article class="trip-admin-card" data-trip-id="">
+    <h3 class="trip-name"></h3>
+    <p class="trip-route"></p>
+    <p class="trip-distance"></p>
+    <p class="trip-price"></p>
+    <div class="card-actions">
+      <button type="button" class="btn btn-secondary" data-action="edit">Edit</button>
+      <button type="button" class="btn btn-danger" data-action="delete">Delete</button>
+    </div>
+  </article>
+</template>
+
+<!-- Dynamic In-Place Edit Form Template -->
+<template id="trip-edit-template">
+  <form class="trip-edit-form" data-trip-id="">
+    <div class="form-group">
+      <label>Trip Name
+        <input type="text" name="name" required />
+      </label>
+    </div>
+    <div class="form-group">
+      <label>Origin
+        <input type="text" name="origin" required />
+      </label>
+    </div>
+    <div class="form-group">
+      <label>Destination
+        <input type="text" name="destination" required />
+      </label>
+    </div>
+    <div class="form-group">
+      <label>Distance (km)
+        <input type="number" name="distance" min="0" step="1" required />
+      </label>
+    </div>
+    <div class="form-group">
+      <label>Base Price (¥)
+        <input type="number" name="basePrice" min="0" step="1" />
+      </label>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Save Changes</button>
+      <button type="button" class="btn btn-outline" data-action="cancel">Cancel</button>
+    </div>
+  </form>
+</template>
+
+<script src="/js/trips-admin.js"></script>
+
+<%- include('../partials/footer') %>
