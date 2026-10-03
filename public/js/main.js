@@ -70,7 +70,7 @@ const hookTrainsCatalog = async () => {
             return;
         }
 
-        paginationEl.hidden = totalPages <= 1;
+        paginationEl.hidden = false;
 
         pageInfoEl.textContent =
             `Page ${currentPage} of ${totalPages}`;
