@@ -48,4 +48,50 @@ describe('GET /api/trains', () => {
       ])
     );
   });
+
+  test('returns paginated results and metadata', async () => {
+    const response = await request(app).get('/api/trains?page=1&limit=2');
+
+    expect(response.status).toBe(200);
+    expect(response.body.trains).toHaveLength(2);
+    expect(response.body.metadata).toEqual({
+      page: 1,
+      limit: 2,
+      total: 4,
+      totalPages: 2,
+      search: ''
+    });
+  });
+
+  test('returns the second page of results', async () => {
+    const response = await request(app).get('/api/trains?page=2&limit=2');
+
+    expect(response.status).toBe(200);
+    expect(response.body.trains).toHaveLength(2);
+    expect(response.body.metadata).toEqual({
+      page: 2,
+      limit: 2,
+      total: 4,
+      totalPages: 2,
+      search: ''
+    });
+  });
+
+  test('rejects an invalid page value', async () => {
+    const response = await request(app).get('/api/trains?page=0');
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: 'page must be a positive integer'
+    });
+  });
+
+  test('rejects an invalid limit value', async () => {
+    const response = await request(app).get('/api/trains?limit=0');
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: 'limit must be a positive integer'
+    });
+  });
 });
