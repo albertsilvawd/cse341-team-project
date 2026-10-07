@@ -9,6 +9,7 @@ const starterCollections = [
   ['trips', trips],
   ['schedules', schedules],
   ['stations', stations],
+  ['ticket-classes', ticketClasses],
   ['ticketClasses', ticketClasses],
   ['trains', trains],
   ['roles', roles]
@@ -24,10 +25,6 @@ const initializeDatabase = async (db) => {
     await collection.deleteMany({});
     await collection.insertMany(documents);
   }
-
-  const confirmations = db.collection('confirmations');
-  await confirmations.deleteMany({});
-  await confirmations.createIndex({ id: 1 }, { unique: true });
 };
 
 export { initializeDatabase, starterCollections };

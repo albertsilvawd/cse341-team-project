@@ -52,19 +52,26 @@ const hookTrainsCatalog = async () => {
     }
 };
 
-const hookTripsCatalog = async () => {
+const hookTripsCatalog = () => {
     const listEl = document.getElementById('trips-list');
     const templateEl = document.getElementById('trip-card-template');
     const loadingEl = document.getElementById('trips-loading');
     const errorEl = document.getElementById('trips-error');
     const regionSelect = document.getElementById('region-filter');
     const seasonSelect = document.getElementById('season-filter');
+    const keywordInput = document.getElementById('keyword-filter');
+    const paginationEl = document.getElementById('pagination-controls');
+    const prevBtn = document.getElementById('prev-page-btn');
+    const nextBtn = document.getElementById('next-page-btn');
+    const pageIndicatorEl = document.getElementById('page-indicator');
 
     if (!listEl || !templateEl) {
         return;
     }
 
-    let allTrips = [];
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+    let searchDebounceTimer = null;
 
     const renderTrips = (trips) => {
         const fragment = document.createDocumentFragment();
@@ -103,70 +110,133 @@ const hookTripsCatalog = async () => {
         listEl.replaceChildren(fragment);
     };
 
-    const applyFilters = () => {
-        const selectedRegion = regionSelect ? regionSelect.value : 'all';
-        const selectedSeason = seasonSelect ? seasonSelect.value : 'all';
-
-        const filtered = allTrips.filter((trip) => {
-            const matchesRegion = selectedRegion === 'all' || trip.region === selectedRegion;
-            const matchesSeason = selectedSeason === 'all' || trip.bestSeason === selectedSeason;
-            return matchesRegion && matchesSeason;
-        });
-
-        renderTrips(filtered);
-    };
-
-    const populateFilterOptions = (selectEl, values) => {
-        if (!selectEl) {
+    const updatePaginationControls = (pagination) => {
+        if (!paginationEl) {
             return;
         }
 
-        values.forEach((value) => {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = value.charAt(0).toUpperCase() + value.slice(1);
-            selectEl.appendChild(option);
-        });
+        paginationEl.hidden = false;
+
+        if (pageIndicatorEl) {
+            pageIndicatorEl.textContent = `Page ${pagination.page} of ${pagination.totalPages}`;
+        }
+        if (prevBtn) {
+            prevBtn.disabled = !pagination.hasPreviousPage;
+        }
+        if (nextBtn) {
+            nextBtn.disabled = !pagination.hasNextPage;
+        }
     };
 
-    try {
-        const response = await fetch('/api/trips');
-        if (!response.ok) {
-            throw new Error(`Failed to load trips (${response.status})`);
+    const buildQuery = (page) => {
+        const params = new URLSearchParams();
+        params.set('page', page);
+        params.set('limit', PAGE_SIZE);
+
+        const region = regionSelect ? regionSelect.value : 'all';
+        const season = seasonSelect ? seasonSelect.value : 'all';
+        const keyword = keywordInput ? keywordInput.value.trim() : '';
+
+        if (region && region !== 'all') {
+            params.set('region', region);
+        }
+        if (season && season !== 'all') {
+            params.set('season', season);
+        }
+        if (keyword) {
+            params.set('q', keyword);
         }
 
-        const payload = await response.json();
-        allTrips = payload.trips || [];
+        return params.toString();
+    };
 
-        const regions = [...new Set(allTrips.map((trip) => trip.region))];
-        const seasons = [...new Set(allTrips.map((trip) => trip.bestSeason))];
+    const loadPage = async (page) => {
+        try {
+            const response = await fetch(`/api/trips?${buildQuery(page)}`);
+            if (!response.ok) {
+                throw new Error(`Failed to load trips (${response.status})`);
+            }
 
-        populateFilterOptions(regionSelect, regions);
-        populateFilterOptions(seasonSelect, seasons);
+            const payload = await response.json();
+            currentPage = payload.pagination.page;
 
-        if (regionSelect) {
-            regionSelect.addEventListener('change', applyFilters);
+            renderTrips(payload.data);
+            updatePaginationControls(payload.pagination);
+
+            if (loadingEl) {
+                loadingEl.hidden = true;
+            }
+        } catch (error) {
+            if (loadingEl) {
+                loadingEl.hidden = true;
+            }
+            if (errorEl) {
+                errorEl.hidden = false;
+                errorEl.textContent = 'Unable to load trips right now. Please try again in a moment.';
+            }
         }
-        if (seasonSelect) {
-            seasonSelect.addEventListener('change', applyFilters);
+    };
+
+    const populateFilterOptions = async () => {
+        if (!regionSelect && !seasonSelect) {
+            return;
         }
 
-        renderTrips(allTrips);
+        try {
+            const response = await fetch('/api/trips?limit=50');
+            if (!response.ok) {
+                return;
+            }
 
-        if (loadingEl) {
-            loadingEl.hidden = true;
+            const payload = await response.json();
+            const trips = payload.data || [];
+
+            const regions = [...new Set(trips.map((trip) => trip.region))];
+            const seasons = [...new Set(trips.map((trip) => trip.bestSeason))];
+
+            regions.forEach((value) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value.charAt(0).toUpperCase() + value.slice(1);
+                regionSelect.appendChild(option);
+            });
+
+            seasons.forEach((value) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value.charAt(0).toUpperCase() + value.slice(1);
+                seasonSelect.appendChild(option);
+            });
+        } catch (error) {
+            // Filter options are a convenience; if this fails the dropdowns
+            // simply show only "All", search and pagination still work.
         }
-    } catch (error) {
-        if (loadingEl) {
-            loadingEl.hidden = true;
-        }
-        if (errorEl) {
-            errorEl.hidden = false;
-            errorEl.textContent = 'Unable to load trips right now. Please try again in a moment.';
-        }
+    };
+
+    if (regionSelect) {
+        regionSelect.disabled = false;
+        regionSelect.addEventListener('change', () => loadPage(1));
     }
-};
+    if (seasonSelect) {
+        seasonSelect.disabled = false;
+        seasonSelect.addEventListener('change', () => loadPage(1));
+    }
+    if (keywordInput) {
+        keywordInput.addEventListener('input', () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => loadPage(1), 300);
+        });
+    }
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => loadPage(currentPage - 1));
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => loadPage(currentPage + 1));
+    }
 
+    populateFilterOptions();
+    loadPage(currentPage);
+};
 const hookStationInfo = () => {
     const stationButtons = document.querySelectorAll('.station-info-btn');
     stationButtons.forEach((button) => {
@@ -208,6 +278,7 @@ const hookStationInfo = () => {
                     regionEl,
                     facilitiesEl
                 );
+
                 detailsEl.hidden = false;
             } catch (error) {
                 detailsEl.textContent =
@@ -220,8 +291,192 @@ const hookStationInfo = () => {
     });
 };
 
+const hookBookingsCatalog = async () => {
+    const listEl = document.getElementById('bookings-container');
+    const templateEl = document.getElementById('booking-card-template');
+    const loadingEl = document.getElementById('bookings-loading');
+    const errorEl = document.getElementById('bookings-error');
+
+    if (!listEl || !templateEl) {
+        return;
+    }
+
+    const formatBookingValue = (value) => {
+        return String(value)
+            .replace(/[-_]/g, ' ')
+            .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    };
+
+    try {
+        const response = await fetch('/api/bookings');
+
+        if (!response.ok) {
+            throw new Error(`Failed to load bookings (${response.status})`);
+        }
+
+        const payload = await response.json();
+        const bookings = payload.bookings || [];
+
+        bookings.sort((a, b) => {
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        const fragment = document.createDocumentFragment();
+
+        if (bookings.length === 0) {
+            listEl.innerHTML = '<p>No bookings found.</p>';
+        } else {
+            bookings.forEach((booking) => {
+                const card = templateEl.content.cloneNode(true);
+
+                card.querySelector('[data-field="booking-id"]').textContent =
+                    booking.id;
+
+                card.querySelector('[data-field="ticket-class"]').textContent =
+                    formatBookingValue(booking.ticketClass);
+
+                card.querySelector('[data-field="selected-day"]').textContent =
+                    formatBookingValue(booking.selectedDay);
+
+                card.querySelector('[data-field="created"]').textContent =
+                    new Date(booking.createdAt).toLocaleString();
+
+                const passengersEl = card.querySelector(
+                    '[data-field="passengers"]'
+                );
+
+                booking.passengers.forEach((passenger) => {
+                    const passengerEl = document.createElement('li');
+
+                    passengerEl.textContent =
+                        `${passenger.firstName} ${passenger.lastName} - ` +
+                        `${passenger.email} - ${passenger.phone}`;
+
+                    passengersEl.appendChild(passengerEl);
+                });
+
+                const bookingCard = card.querySelector('.booking-card');
+
+                const ticketClassEl = card.querySelector(
+                    '[data-field="ticket-class"]'
+                );
+
+                const updateButton = card.querySelector(
+                    '[data-action="update-booking"]'
+                );
+
+                updateButton.addEventListener('click', async () => {
+                    const currentTicketClass = booking.ticketClass;
+
+                    const newTicketClass = window.prompt(
+                        'Enter the new ticket class (First, Standard, or Premium):',
+                        formatBookingValue(currentTicketClass)
+                    );
+
+                    if (!newTicketClass) {
+                        return;
+                    }
+
+                    const ticketClassOptions = [
+                        'first',
+                        'standard',
+                        'premium'
+                    ];
+
+                    const selectedTicketClass = newTicketClass
+                        .trim()
+                        .toLowerCase();
+
+                    if (!ticketClassOptions.includes(selectedTicketClass)) {
+                        window.alert(
+                            'Please enter First, Standard, or Premium.'
+                        );
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/bookings/${booking.id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ticketClass: selectedTicketClass
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(
+                                data.message || 'Unable to update booking.'
+                            );
+                        }
+
+                        booking.ticketClass = data.booking.ticketClass;
+
+                        ticketClassEl.textContent =
+                            formatBookingValue(data.booking.ticketClass);
+                    } catch (error) {
+                        window.alert(error.message);
+                    }
+                });
+
+                const deleteButton = card.querySelector(
+                    '[data-action="delete-booking"]'
+                );
+
+                deleteButton.addEventListener('click', async () => {
+                    const confirmed = window.confirm(
+                        'Are you sure you want to delete this booking?'
+                    );
+
+                    if (!confirmed) {
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/bookings/${booking.id}`, {
+                            method: 'DELETE'
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Unable to delete booking.');
+                        }
+
+                        bookingCard.remove();
+                    } catch (error) {
+                        window.alert(error.message);
+                    }
+                });
+
+                fragment.appendChild(card);
+            });
+
+            listEl.replaceChildren(fragment);
+        }
+
+        if (loadingEl) {
+            loadingEl.hidden = true;
+        }
+    } catch (error) {
+        if (loadingEl) {
+            loadingEl.hidden = true;
+        }
+
+        if (errorEl) {
+            errorEl.hidden = false;
+            errorEl.textContent =
+                'Unable to load bookings right now. Please try again in a moment.';
+        }
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     hookTrainsCatalog();
     hookTripsCatalog();
     hookStationInfo();
+    hookBookingsCatalog();
 });
