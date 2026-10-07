@@ -9,8 +9,33 @@ const getAllBookings = async () => {
   return Booking.find({}).lean();
 };
 
+const getBookingsByPassengerEmail = async (email) => {
+  return Booking.find({
+    'passengers.email': email
+  }).lean();
+};
+
 const getBookingById = async (id) => {
   return Booking.findOne({ id }).lean();
 };
 
-export { createBooking, getAllBookings, getBookingById };
+const updateBooking = async (id, bookingData) => {
+  return Booking.findOneAndUpdate(
+    { id },
+    bookingData,
+    { returnDocument: 'after', runValidators: true }
+  ).lean();
+};
+
+const deleteBooking = async (id) => {
+  return Booking.findOneAndDelete({ id }).lean();
+};
+
+export {
+  createBooking,
+  getAllBookings,
+  getBookingsByPassengerEmail,
+  updateBooking,
+  deleteBooking,
+  getBookingById
+};
