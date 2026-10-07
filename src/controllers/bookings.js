@@ -19,6 +19,19 @@ const canAccessBooking = (booking, user) => {
   );
 };
 
+const getMyBookings = async (req, res) => {
+  try {
+    const bookings = await getBookingsByPassengerEmail(req.user.email);
+
+    return res.json(bookings);
+  } catch (error) {
+    console.error('Error fetching user bookings:', error);
+    return res.status(500).json({
+      message: 'Unable to load bookings.'
+    });
+  }
+};
+
 const bookingPage = async (req, res, next) => {
   try {
     const { scheduleId } = req.params;
@@ -188,6 +201,7 @@ const bookingsAdminPage = (req, res) => {
 };
 
 export {
+  getMyBookings,
   bookingPage,
   processBookingRequest,
   getAllBookingsApi,

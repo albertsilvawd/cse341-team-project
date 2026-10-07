@@ -21,7 +21,7 @@ router.get('/trains', trainsPage);
 // Trains API
 router.get('/api/trains', trainsApi);
 
-// Stations + Trips API
+// Stations + Trips + Bookings + Ticket Classes API
 router.use('/api', apiRouter);
 
 // Bookings admin page

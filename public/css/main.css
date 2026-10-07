@@ -7,6 +7,7 @@
 @import 'utilities/booking.css' layer(utilities);
 @import 'utilities/bookings.css' layer(utilities);
 @import 'utilities/confirmation.css' layer(utilities);
+@import 'utilities/dashboard.css' layer(utilities);
 @import 'utilities/home.css' layer(utilities);
 @import 'utilities/trains.css' layer(utilities);
 @import 'utilities/trip-detail.css' layer(utilities);

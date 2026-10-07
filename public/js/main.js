@@ -237,7 +237,6 @@ const hookTripsCatalog = () => {
     populateFilterOptions();
     loadPage(currentPage);
 };
-    
 const hookStationInfo = () => {
     const stationButtons = document.querySelectorAll('.station-info-btn');
     stationButtons.forEach((button) => {

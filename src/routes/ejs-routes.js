@@ -8,8 +8,11 @@ import {
     logout,
     adminDashboardPage
 } from '../controllers/auth.js';
-import { requirePageRole } from '../middleware/auth.js';
+import { requirePageLogin, requirePageRole } from '../middleware/auth.js';
+import { dashboardPage } from '../controllers/dashboard.js';
 import { listTripsPage, tripDetailsPage } from '../controllers/trips.js';
+
+
 
 const router = Router();
 
@@ -20,6 +23,7 @@ router.get('/login', loginPage);
 router.post('/login', login);
 router.get('/logout', logout);
 router.get('/admin', requirePageRole('admin'), adminDashboardPage);
+router.get('/dashboard', requirePageLogin, dashboardPage);
 
 // Trips list/details pages
 router.get('/trips', listTripsPage);
