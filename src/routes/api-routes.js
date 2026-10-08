@@ -6,6 +6,7 @@ import {
 } from '../controllers/stations.js';
 import { getTripById, getAllTrips } from '../controllers/trips.js';
 import {
+    getMyBookings,
     getAllBookingsApi,
     updateBookingApi,
     deleteBookingApi
@@ -106,8 +107,11 @@ router.put('/bookings/:id', requireApiLogin, updateBookingApi);
  *         description: Server error
  */
 router.delete('/bookings/:id', requireApiLogin, deleteBookingApi);
-// Trips
 
+// Dashboard bookings endpoint
+router.get('/bookings/my-bookings', requireApiLogin, getMyBookings);
+
+// Trips
 /**
  * @openapi
  * /api/trips:
