@@ -10,7 +10,11 @@ import {
     updateBookingApi,
     deleteBookingApi
 } from '../controllers/bookings.js';
-import { requireApiLogin } from '../middleware/auth.js';
+import {
+    getAllUsersApi,
+    getUserByIdApi
+} from '../controllers/users.js';
+import { requireApiLogin, requireApiRole } from '../middleware/auth.js';
 import { getAllTicketClasses } from '../controllers/ticket-classes.js';
 
 const router = Router();
@@ -171,5 +175,47 @@ router.get('/trips', getAllTrips);
 router.get('/trips/:id', getTripById);
 
 router.get('/ticket-classes', getAllTicketClasses);
+
+/**
+ * @openapi
+ * /api/users:
+ *   get:
+ *     summary: Get all users
+ *     description: Administrator-only. Returns every user account without password hashes.
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: A list of users
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden (non-admin user)
+ *       500:
+ *         description: Server error
+ * /api/users/{id}:
+ *   get:
+ *     summary: Get a single user by id
+ *     description: Administrators can view any user. A standard signed-in user can only view their own record.
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: The requested user, without password hash
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden (not the owner and not an admin)
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/users', requireApiRole('admin'), getAllUsersApi);
+router.get('/users/:id', requireApiLogin, getUserByIdApi);
 
 export default router;
