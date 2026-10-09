@@ -2,12 +2,33 @@ import { getDb } from '../db/connect.js';
 import { generateConfirmationCode } from '../includes/helpers.js';
 import {
   createBooking,
-  getAllBookings,
-  getBookingsByPassengerEmail,
   getBookingById,
   updateBooking,
-  deleteBooking
+  deleteBooking,
+  getPaginatedBookings
 } from '../models/bookings.js';
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 50;
+
+const parsePaginationParams = (query) => {
+  const rawPage = query.page;
+  const rawLimit = query.limit;
+
+  const page = rawPage === undefined ? DEFAULT_PAGE : Number(rawPage);
+  const limit = rawLimit === undefined ? DEFAULT_LIMIT : Number(rawLimit);
+
+  if (!Number.isInteger(page) || page < 1) {
+    return { error: 'page must be a positive integer' };
+  }
+
+  if (!Number.isInteger(limit) || limit < 1) {
+    return { error: 'limit must be a positive integer' };
+  }
+
+  return { page, limit: Math.min(limit, MAX_LIMIT) };
+};
 
 const canAccessBooking = (booking, user) => {
   if (user.role === 'admin') {
@@ -82,11 +103,36 @@ const processBookingRequest = async (req, res, next) => {
 
 const getAllBookingsApi = async (req, res, next) => {
   try {
-    const bookings = req.user.role === 'admin'
-      ? await getAllBookings()
-      : await getBookingsByPassengerEmail(req.user.email);
+    const parsed = parsePaginationParams(req.query);
 
-    return res.status(200).json({ bookings });
+    if (parsed.error) {
+      return res.status(400).json({
+        error: parsed.error
+      });
+    }
+
+    const { page, limit } = parsed;
+
+    const { bookings, totalBookings } = await getPaginatedBookings({
+      page,
+      limit,
+      email: req.user.email,
+      isAdmin: req.user.role === 'admin'
+    });
+
+    const totalPages = Math.ceil(totalBookings / limit) || 1;
+
+    return res.status(200).json({
+      bookings,
+      pagination: {
+        page,
+        limit,
+        totalBookings,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages
+      }
+    });
   } catch (error) {
     return next(error);
   }
