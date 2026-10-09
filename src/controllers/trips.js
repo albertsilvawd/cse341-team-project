@@ -79,12 +79,15 @@ export async function tripDetailsPage(req, res) {
 export async function updateTripApi(req, res) {
   try {
     const { id } = req.params;
-
-    // Pluck and whitelist allowable fields only
     const allowedUpdates = {};
     if (req.body.name !== undefined) allowedUpdates.name = req.body.name;
+    
+    // Support both naming conventions to avoid schema mismatches
+    if (req.body.startStation !== undefined) allowedUpdates.startStation = req.body.startStation;
+    if (req.body.endStation !== undefined) allowedUpdates.endStation = req.body.endStation;
     if (req.body.origin !== undefined) allowedUpdates.origin = req.body.origin;
     if (req.body.destination !== undefined) allowedUpdates.destination = req.body.destination;
+
     if (req.body.distance !== undefined) allowedUpdates.distance = Number(req.body.distance);
     if (req.body.basePrice !== undefined) allowedUpdates.basePrice = Number(req.body.basePrice);
     if (req.body.stations !== undefined) allowedUpdates.stations = req.body.stations;
@@ -93,11 +96,9 @@ export async function updateTripApi(req, res) {
     if (req.body.isActive !== undefined) allowedUpdates.isActive = Boolean(req.body.isActive);
 
     const updatedTrip = await updateTripModel(id, allowedUpdates);
-
     if (!updatedTrip) {
       return res.status(404).json({ message: "Trip not found" });
     }
-
     return res.status(200).json(updatedTrip);
   } catch (error) {
     console.error("Error updating trip:", error);
