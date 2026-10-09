@@ -127,7 +127,7 @@ const getAllBookingsApi = async (req, res, next) => {
       pagination: {
         page,
         limit,
-        totalBookings,
+        totalItems: totalBookings,
         totalPages,
         hasPreviousPage: page > 1,
         hasNextPage: page < totalPages
