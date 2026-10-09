@@ -4,17 +4,14 @@ import {
     getAllStationsApi,
     getStationByIdApi
 } from '../controllers/stations.js';
-import { getTripById, getAllTrips } from '../controllers/trips.js';
-import {
-    getAllBookingsApi,
-    updateBookingApi,
-    deleteBookingApi
-} from '../controllers/bookings.js';
-import { requireApiLogin } from '../middleware/auth.js';
+import { getTripById, getAllTrips, updateTripApi, deleteTripApi } from '../controllers/trips.js';
 import { getAllTicketClasses } from '../controllers/ticket-classes.js';
 
-const router = Router();
+import { getAllBookingsApi, updateBookingApi, deleteBookingApi } from '../controllers/bookings.js';
+import { requireApiRole, requireApiLogin } from '../middleware/auth.js';
 
+const router = Router();
+ 
 // Stations
 router.get('/stations', getAllStationsApi);
 router.get('/stations/:id', getStationByIdApi);
@@ -169,6 +166,9 @@ router.delete('/bookings/:id', requireApiLogin, deleteBookingApi);
  */
 router.get('/trips', getAllTrips);
 router.get('/trips/:id', getTripById);
+router.put('/trips/:id', requireApiRole('admin'), updateTripApi);
+router.delete('/trips/:id', requireApiRole('admin'), deleteTripApi);
+
 
 router.get('/ticket-classes', getAllTicketClasses);
 
