@@ -6,6 +6,38 @@
       <p>View current trip bookings and passenger information.</p>
     </header>
 
+    <section id="booking-filters" class="booking-filters">
+      <div class="filter-group">
+        <label for="booking-ticket-class">Ticket Class</label>
+        <select id="booking-ticket-class">
+          <option value="">All ticket classes</option>
+          <option value="first">First</option>
+          <option value="standard">Standard</option>
+          <option value="premium">Premium</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="booking-start-date">From Date</label>
+        <input type="date" id="booking-start-date" />
+      </div>
+
+      <div class="filter-group">
+        <label for="booking-end-date">To Date</label>
+        <input type="date" id="booking-end-date" />
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" id="booking-apply-filters">
+          Apply Filters
+        </button>
+
+        <button type="button" id="booking-clear-filters">
+          Clear Filters
+        </button>
+      </div>
+    </section>
+
     <section class="bookings-section" aria-labelledby="bookings-title">
       <h2 id="bookings-title" class="section-title">Booking Records</h2>
 
