@@ -7,6 +7,28 @@ import {
   deleteTrip as deleteTripModel
 } from "../models/trips.js";
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 50;
+
+function parsePaginationParams(query) {
+  const rawPage = query.page;
+  const rawLimit = query.limit;
+
+  const page = rawPage === undefined ? DEFAULT_PAGE : Number(rawPage);
+  const limit = rawLimit === undefined ? DEFAULT_LIMIT : Number(rawLimit);
+
+  if (!Number.isInteger(page) || page < 1) {
+    return { error: "page must be a positive integer" };
+  }
+
+  if (!Number.isInteger(limit) || limit < 1) {
+    return { error: "limit must be a positive integer" };
+  }
+
+  return { page, limit: Math.min(limit, MAX_LIMIT) };
+}
+
 // API controllers
 
 export async function getTripById(req, res) {
@@ -33,9 +55,37 @@ export async function getTripById(req, res) {
 
 export async function getAllTrips(req, res) {
   try {
-    const trips = await findAllTrips();
+    const parsed = parsePaginationParams(req.query);
 
-    return res.status(200).json({ trips });
+    if (parsed.error) {
+      return res.status(400).json({ error: parsed.error });
+    }
+
+    const { page, limit } = parsed;
+    const region = typeof req.query.region === "string" ? req.query.region.trim() : "";
+    const season = typeof req.query.season === "string" ? req.query.season.trim() : "";
+    const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+
+    const { trips, totalItems } = await findPaginatedTrips({
+      page,
+      limit,
+      region: region || undefined,
+      season: season || undefined,
+      q: q || undefined,
+    });
+    const totalPages = Math.ceil(totalItems / limit) || 1;
+
+    return res.status(200).json({
+      data: trips,
+      pagination: {
+        page,
+        limit,
+        totalItems,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    });
   } catch (error) {
     console.error("Error fetching trips:", error);
 
