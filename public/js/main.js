@@ -298,10 +298,17 @@ const hookBookingsCatalog = async () => {
     const templateEl = document.getElementById('booking-card-template');
     const loadingEl = document.getElementById('bookings-loading');
     const errorEl = document.getElementById('bookings-error');
+
     const paginationEl = document.getElementById('bookings-pagination-controls');
     const prevBtn = document.getElementById('bookings-prev-page-btn');
     const nextBtn = document.getElementById('bookings-next-page-btn');
     const pageIndicatorEl = document.getElementById('bookings-page-indicator');
+
+    const ticketClassFilter = document.getElementById('booking-ticket-class');
+    const startDateFilter = document.getElementById('booking-start-date');
+    const endDateFilter = document.getElementById('booking-end-date');
+    const applyFiltersBtn = document.getElementById('booking-apply-filters');
+    const clearFiltersBtn = document.getElementById('booking-clear-filters');
 
     if (!listEl || !templateEl) {
         return;
@@ -504,9 +511,22 @@ const hookBookingsCatalog = async () => {
         }
 
         try {
+
             const params = new URLSearchParams();
             params.set('page', page);
             params.set('limit', PAGE_SIZE);
+
+            if (ticketClassFilter && ticketClassFilter.value) {
+                params.set('ticketClass', ticketClassFilter.value);
+            }
+
+            if (startDateFilter && startDateFilter.value) {
+                params.set('startDate', startDateFilter.value);
+            }
+
+            if (endDateFilter && endDateFilter.value) {
+                params.set('endDate', endDateFilter.value);
+            }
 
             const response = await fetch(`/api/bookings?${params.toString()}`);
 
@@ -563,6 +583,31 @@ const hookBookingsCatalog = async () => {
     if (nextBtn) {
         nextBtn.addEventListener('click', () => {
             loadPage(currentPage + 1);
+        });
+    }
+
+
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', () => {
+            loadPage(1);
+        });
+    }
+
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+            if (ticketClassFilter) {
+                ticketClassFilter.value = '';
+            }
+
+            if (startDateFilter) {
+                startDateFilter.value = '';
+            }
+
+            if (endDateFilter) {
+                endDateFilter.value = '';
+            }
+
+            loadPage(1);
         });
     }
 

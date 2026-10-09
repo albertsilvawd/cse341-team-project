@@ -9,12 +9,37 @@ const getAllBookings = async () => {
   return Booking.find({}).lean();
 };
 
-const getPaginatedBookings = async ({ page, limit, email, isAdmin }) => {
+
+const getPaginatedBookings = async ({
+  page,
+  limit,
+  email,
+  isAdmin,
+  ticketClass,
+  startDate,
+  endDate
+}) => {
   const skip = (page - 1) * limit;
 
   const filter = isAdmin
     ? {}
     : { 'passengers.email': email };
+
+  if (ticketClass) {
+    filter.ticketClass = ticketClass;
+  }
+
+  if (startDate || endDate) {
+    filter.createdAt = {};
+
+    if (startDate) {
+      filter.createdAt.$gte = startDate;
+    }
+
+    if (endDate) {
+      filter.createdAt.$lt = endDate;
+    }
+  }
 
   const [bookings, totalBookings] = await Promise.all([
     Booking.find(filter)

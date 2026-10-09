@@ -19,33 +19,58 @@ const router = Router();
 router.get('/stations', getAllStationsApi);
 router.get('/stations/:id', getStationByIdApi);
 
-
 /**
  * @openapi
  * /api/bookings:
  *   get:
- *     summary: Get a paginated list of bookings
- *     description: Admin users receive all bookings. Authenticated non-admin users receive only bookings where their email matches a passenger. Results are sorted by booking date, newest first.
+ *     summary: Get a paginated and filterable list of bookings
+ *     description: Admin users receive all bookings. Authenticated non-admin users receive only bookings where their email matches a passenger. Results are sorted by booking creation date, newest first. Optional filters support ticket class and booking creation date range.
  *     tags: [Bookings]
  *     parameters:
  *       - in: query
  *         name: page
+ *         required: false
  *         schema:
  *           type: integer
  *           minimum: 1
  *           default: 1
- *         description: Page number to retrieve (must be a positive integer)
+ *         description: Page number to retrieve (must be a positive integer).
  *       - in: query
  *         name: limit
+ *         required: false
  *         schema:
  *           type: integer
  *           minimum: 1
  *           maximum: 50
  *           default: 10
- *         description: Number of bookings per page (maximum 50)
+ *         description: Number of bookings per page (maximum 50).
+ *       - in: query
+ *         name: ticketClass
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum:
+ *             - first
+ *             - standard
+ *             - premium
+ *         description: Filter bookings by ticket class.
+ *       - in: query
+ *         name: startDate
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Include bookings created on or after this date (YYYY-MM-DD).
+ *       - in: query
+ *         name: endDate
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Include bookings created on or before this date (YYYY-MM-DD).
  *     responses:
  *       200:
- *         description: A page of bookings with pagination metadata
+ *         description: A page of bookings with pagination metadata. An empty bookings array is returned when no records match.
  *         content:
  *           application/json:
  *             schema:
@@ -72,15 +97,27 @@ router.get('/stations/:id', getStationByIdApi);
  *                     hasPreviousPage:
  *                       type: boolean
  *       400:
- *         description: Invalid page or limit parameter
+ *         description: Invalid pagination or filter parameter, or startDate is after endDate.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 message:
+ *                 error:
  *                   type: string
- *                   example: page must be a positive integer
+ *             examples:
+ *               invalidPage:
+ *                 summary: Invalid page
+ *                 value:
+ *                   error: page must be a positive integer
+ *               invalidTicketClass:
+ *                 summary: Invalid ticket class
+ *                 value:
+ *                   error: Invalid ticketClass parameter
+ *               invalidDate:
+ *                 summary: Invalid date
+ *                 value:
+ *                   error: startDate must be a valid YYYY-MM-DD date
  *       401:
  *         description: Authentication required
  *       500:

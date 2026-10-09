@@ -30,6 +30,65 @@ const parsePaginationParams = (query) => {
   return { page, limit: Math.min(limit, MAX_LIMIT) };
 };
 
+
+const parseBookingFilters = (query) => {
+  const { ticketClass, startDate, endDate } = query;
+
+  const validTicketClasses = [
+    'first',
+    'standard',
+    'premium'
+  ];
+
+  if (
+    ticketClass !== undefined &&
+    !validTicketClasses.includes(ticketClass)
+  ) {
+    return { error: 'Invalid ticketClass parameter' };
+  }
+
+  const isValidDate = (value) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return false;
+    }
+
+    const date = new Date(`${value}T00:00:00.000Z`);
+
+    return !Number.isNaN(date.getTime()) &&
+      date.toISOString().slice(0, 10) === value;
+  };
+
+  if (startDate !== undefined && !isValidDate(startDate)) {
+    return { error: 'startDate must be a valid YYYY-MM-DD date' };
+  }
+
+  if (endDate !== undefined && !isValidDate(endDate)) {
+    return { error: 'endDate must be a valid YYYY-MM-DD date' };
+  }
+
+  if (startDate && endDate && startDate > endDate) {
+    return { error: 'startDate cannot be after endDate' };
+  }
+
+  const filters = {};
+
+  if (ticketClass) {
+    filters.ticketClass = ticketClass;
+  }
+
+  if (startDate) {
+    filters.startDate = new Date(`${startDate}T00:00:00.000Z`);
+  }
+
+  if (endDate) {
+    const exclusiveEndDate = new Date(`${endDate}T00:00:00.000Z`);
+    exclusiveEndDate.setUTCDate(exclusiveEndDate.getUTCDate() + 1);
+    filters.endDate = exclusiveEndDate;
+  }
+
+  return { filters };
+};
+
 const canAccessBooking = (booking, user) => {
   if (user.role === 'admin') {
     return true;
@@ -101,23 +160,32 @@ const processBookingRequest = async (req, res, next) => {
   }
 };
 
+
 const getAllBookingsApi = async (req, res, next) => {
   try {
     const parsed = parsePaginationParams(req.query);
 
     if (parsed.error) {
+      return res.status(400).json({ error: parsed.error });
+    }
+
+    const parsedFilters = parseBookingFilters(req.query);
+
+    if (parsedFilters.error) {
       return res.status(400).json({
-        error: parsed.error
+        error: parsedFilters.error
       });
     }
 
     const { page, limit } = parsed;
+    const { filters } = parsedFilters;
 
     const { bookings, totalBookings } = await getPaginatedBookings({
       page,
       limit,
       email: req.user.email,
-      isAdmin: req.user.role === 'admin'
+      isAdmin: req.user.role === 'admin',
+      ...filters
     });
 
     const totalPages = Math.ceil(totalBookings / limit) || 1;
