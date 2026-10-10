@@ -31,7 +31,6 @@ function parsePaginationParams(query) {
 
 export function toSafeUser(user) {
     if (!user) return null;
-
     return {
         id: user._id.toString(),
         displayName: user.displayName,
