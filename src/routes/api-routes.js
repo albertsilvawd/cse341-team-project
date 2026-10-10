@@ -240,12 +240,37 @@ router.get('/ticket-classes', getAllTicketClasses);
  * @openapi
  * /api/users:
  *   get:
- *     summary: Get all users
- *     description: Administrator-only. Returns every user account without password hashes.
+ *     summary: Get a paginated, filterable list of users
+ *     description: Administrator-only. Returns users without password hashes.
  *     tags: [Users]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number to retrieve (must be a positive integer)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of users per page (max 50)
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *         description: Filter by exact role name match (e.g. admin, customer)
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         description: Keyword search across displayName, username, and email (case-insensitive)
  *     responses:
  *       200:
- *         description: A list of users
+ *         description: A page of users with pagination metadata
+ *       400:
+ *         description: Invalid page or limit parameter
  *       401:
  *         description: Authentication required
  *       403:
