@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const nextBtn = document.querySelector('#next-page-btn');
   const pageIndicator = document.querySelector('#page-indicator');
 
+  // Filter & Search elements
+  const searchInput = document.querySelector('#search-input');
+  const regionFilter = document.querySelector('#region-filter');
+  const seasonFilter = document.querySelector('#season-filter');
+  const applyFiltersBtn = document.querySelector('#apply-filters-btn');
+  const clearFiltersBtn = document.querySelector('#clear-filters-btn');
+
   let currentPage = 1;
   const limit = 2;
   let totalPages = 1;
@@ -28,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderList() {
     if (tripsMap.size === 0) {
-      tripsContainer.innerHTML = '<p>No trips available on this page.</p>';
+      tripsContainer.innerHTML = '<p>No trips match the selected criteria.</p>';
       return;
     }
 
@@ -87,32 +94,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
- async function loadTrips(page = 1) {
-  try {
-    // Indicate loading without wiping the container's height
-    tripsContainer.style.opacity = '0.5';
-    tripsContainer.style.pointerEvents = 'none';
-    prevBtn.disabled = true;
-    nextBtn.disabled = true;
+  async function loadTrips(page = 1) {
+    try {
+      // In-place opacity loading state prevents layout shift
+      tripsContainer.style.opacity = '0.5';
+      tripsContainer.style.pointerEvents = 'none';
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
 
-    const res = await fetch(`/api/trips?page=${page}&limit=${limit}`);
-    if (!res.ok) throw new Error('Could not retrieve trips from server.');
+      // Construct query parameters including active filters
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit)
+      });
 
-    const payload = await res.json();
-    const tripsArray = Array.isArray(payload) ? payload : (payload.data || payload.trips || []);
-    const pagination = payload.pagination || null;
+      const queryVal = searchInput ? searchInput.value.trim() : '';
+      const regionVal = regionFilter ? regionFilter.value.trim() : '';
+      const seasonVal = seasonFilter ? seasonFilter.value.trim() : '';
 
-    tripsMap = new Map(tripsArray.map((t) => [String(getIdentifier(t)), t]));
-    renderList();
-    updatePaginationControls(pagination);
-  } catch (err) {
-    showMessage(err.message, true);
-  } finally {
-    // Restore full opacity and interactivity
-    tripsContainer.style.opacity = '1';
-    tripsContainer.style.pointerEvents = 'auto';
+      if (queryVal) params.append('q', queryVal);
+      if (regionVal) params.append('region', regionVal);
+      if (seasonVal) params.append('season', seasonVal);
+
+      const res = await fetch(`/api/trips?${params.toString()}`);
+      if (!res.ok) throw new Error('Could not retrieve trips from server.');
+
+      const payload = await res.json();
+      const tripsArray = Array.isArray(payload) ? payload : (payload.data || payload.trips || []);
+      const pagination = payload.pagination || null;
+
+      tripsMap = new Map(tripsArray.map((t) => [String(getIdentifier(t)), t]));
+      renderList();
+      updatePaginationControls(pagination);
+    } catch (err) {
+      showMessage(err.message, true);
+    } finally {
+      tripsContainer.style.opacity = '1';
+      tripsContainer.style.pointerEvents = 'auto';
+    }
   }
-}
 
   function populateSelect(selectEl, items, selectedValue, defaultLabel) {
     selectEl.innerHTML = `<option value="">${defaultLabel}</option>`;
@@ -188,7 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const updated = await response.json();
         showMessage(`Successfully updated "${updated.name || updateData.name}".`);
-        // Re-fetch current page to keep display and pagination counts in sync
         await loadTrips(currentPage);
       } catch (error) {
         showMessage(error.message, true);
@@ -198,7 +217,34 @@ document.addEventListener('DOMContentLoaded', () => {
     card.replaceWith(clone);
   }
 
-  // Navigation handlers
+  // Filter Event Listeners (Always reset to page 1)
+  applyFiltersBtn.addEventListener('click', () => {
+    loadTrips(1);
+  });
+
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      loadTrips(1);
+    }
+  });
+
+  regionFilter.addEventListener('change', () => {
+    loadTrips(1);
+  });
+
+  seasonFilter.addEventListener('change', () => {
+    loadTrips(1);
+  });
+
+  clearFiltersBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    regionFilter.value = '';
+    seasonFilter.value = '';
+    loadTrips(1);
+  });
+
+  // Pagination button handlers (preserve active filters)
   prevBtn.addEventListener('click', () => {
     if (currentPage > 1) {
       loadTrips(currentPage - 1);
@@ -237,7 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         showMessage(`Trip was successfully deleted.`);
         
-        // If we deleted the last item on a page greater than 1, step back one page
         if (tripsMap.size === 1 && currentPage > 1) {
           currentPage -= 1;
         }

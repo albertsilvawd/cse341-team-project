@@ -5,6 +5,46 @@
   
   <p id="trip-feedback" role="status" aria-live="polite"></p>
 
+  <!-- Search and Filter Toolbar -->
+  <section class="admin-filter-toolbar" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+    <div class="form-group" style="margin-bottom: 0; flex: 1 1 200px;">
+      <label for="search-input" style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Search Trips</label>
+      <input type="text" id="search-input" placeholder="Search by name or description..." style="width: 100%; padding: 0.5rem;" />
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0; flex: 1 1 150px;">
+      <label for="region-filter" style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Region</label>
+      <select id="region-filter" style="width: 100%; padding: 0.5rem;">
+        <option value="">All Regions</option>
+        <option value="kanto">Kanto</option>
+        <option value="kansai">Kansai</option>
+        <option value="hokkaido">Hokkaido</option>
+        <option value="kyushu">Kyushu</option>
+        <option value="chubu">Chubu</option>
+        <option value="tohoku">Tohoku</option>
+        <option value="shikoku">Shikoku</option>
+        <option value="chugoku">Chugoku</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0; flex: 1 1 150px;">
+      <label for="season-filter" style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Season</label>
+      <select id="season-filter" style="width: 100%; padding: 0.5rem;">
+        <option value="">All Seasons</option>
+        <option value="spring">Spring</option>
+        <option value="summer">Summer</option>
+        <option value="autumn">Autumn</option>
+        <option value="winter">Winter</option>
+        <option value="all year">All Year</option>
+      </select>
+    </div>
+
+    <div class="filter-actions" style="display: flex; gap: 0.5rem;">
+      <button type="button" id="apply-filters-btn" class="btn btn-primary">Filter</button>
+      <button type="button" id="clear-filters-btn" class="btn btn-outline">Clear</button>
+    </div>
+  </section>
+
   <div id="trips-admin-list" class="trips-grid">
     <p>Loading trips...</p>
   </div>
