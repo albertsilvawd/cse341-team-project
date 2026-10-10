@@ -4,7 +4,12 @@ import {
     getAllStationsApi,
     getStationByIdApi
 } from '../controllers/stations.js';
-import { getTripById, getAllTrips } from '../controllers/trips.js';
+import {
+    getTripById,
+    getAllTrips,
+    updateTripApi,
+    deleteTripApi
+} from '../controllers/trips.js';
 import {
     getAllBookingsApi,
     updateBookingApi,
@@ -14,11 +19,15 @@ import {
     getAllUsersApi,
     getUserByIdApi
 } from '../controllers/users.js';
-import { requireApiLogin, requireApiRole } from '../middleware/auth.js';
 import { getAllTicketClasses } from '../controllers/ticket-classes.js';
+import { requireApiLogin, requireApiRole } from '../middleware/auth.js';
 
 const router = Router();
 
+// Stations
+router.get('/stations', getAllStationsApi);
+router.get('/stations/:id', getStationByIdApi);
+ 
 // Stations
 router.get('/stations', getAllStationsApi);
 router.get('/stations/:id', getStationByIdApi);
@@ -27,12 +36,63 @@ router.get('/stations/:id', getStationByIdApi);
  * @openapi
  * /api/bookings:
  *   get:
- *     summary: Get bookings for the authenticated user
- *     description: Admin users receive all bookings. Authenticated non-admin users receive only bookings where their email matches a passenger.
+ *     summary: Get a paginated list of bookings
+ *     description: Admin users receive all bookings. Authenticated non-admin users receive only bookings where their email matches a passenger. Results are sorted by booking date, newest first.
  *     tags: [Bookings]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number to retrieve (must be a positive integer)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
+ *         description: Number of bookings per page (maximum 50)
  *     responses:
  *       200:
- *         description: A list of bookings available to the authenticated user
+ *         description: A page of bookings with pagination metadata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 bookings:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     description: Booking record
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalItems:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     hasNextPage:
+ *                       type: boolean
+ *                     hasPreviousPage:
+ *                       type: boolean
+ *       400:
+ *         description: Invalid page or limit parameter
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: page must be a positive integer
  *       401:
  *         description: Authentication required
  *       500:
@@ -173,6 +233,9 @@ router.delete('/bookings/:id', requireApiLogin, deleteBookingApi);
  */
 router.get('/trips', getAllTrips);
 router.get('/trips/:id', getTripById);
+router.put('/trips/:id', requireApiRole('admin'), updateTripApi);
+router.delete('/trips/:id', requireApiRole('admin'), deleteTripApi);
+
 
 router.get('/ticket-classes', getAllTicketClasses);
 
