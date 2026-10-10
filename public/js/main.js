@@ -237,7 +237,7 @@ const hookTripsCatalog = () => {
     populateFilterOptions();
     loadPage(currentPage);
 };
-    
+
 const hookStationInfo = () => {
     const stationButtons = document.querySelectorAll('.station-info-btn');
     stationButtons.forEach((button) => {
@@ -292,111 +292,131 @@ const hookStationInfo = () => {
     });
 };
 
+
 const hookBookingsCatalog = async () => {
     const listEl = document.getElementById('bookings-container');
     const templateEl = document.getElementById('booking-card-template');
     const loadingEl = document.getElementById('bookings-loading');
     const errorEl = document.getElementById('bookings-error');
+    const paginationEl = document.getElementById('bookings-pagination-controls');
+    const prevBtn = document.getElementById('bookings-prev-page-btn');
+    const nextBtn = document.getElementById('bookings-next-page-btn');
+    const pageIndicatorEl = document.getElementById('bookings-page-indicator');
 
     if (!listEl || !templateEl) {
         return;
     }
 
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+
     const formatBookingValue = (value) => {
-        return String(value)
+        return String(value || '')
             .replace(/[-_]/g, ' ')
             .replace(/\b\w/g, (letter) => letter.toUpperCase());
     };
 
-    try {
-        const response = await fetch('/api/bookings');
-
-        if (!response.ok) {
-            throw new Error(`Failed to load bookings (${response.status})`);
+    const updatePaginationControls = (pagination) => {
+        if (!paginationEl) {
+            return;
         }
 
-        const payload = await response.json();
-        const bookings = payload.bookings || [];
+        paginationEl.hidden = false;
 
-        bookings.sort((a, b) => {
-            return new Date(b.createdAt) - new Date(a.createdAt);
-        });
+        if (pageIndicatorEl) {
+            pageIndicatorEl.textContent =
+                `Page ${pagination.page} of ${pagination.totalPages}`;
+        }
+
+        if (prevBtn) {
+            prevBtn.disabled = !pagination.hasPreviousPage;
+        }
+
+        if (nextBtn) {
+            nextBtn.disabled = !pagination.hasNextPage;
+        }
+    };
+
+    const renderBookings = (bookings) => {
+        if (bookings.length === 0) {
+            listEl.innerHTML = '<p>No bookings found.</p>';
+            return;
+        }
 
         const fragment = document.createDocumentFragment();
 
-        if (bookings.length === 0) {
-            listEl.innerHTML = '<p>No bookings found.</p>';
-        } else {
-            bookings.forEach((booking) => {
-                const card = templateEl.content.cloneNode(true);
+        bookings.forEach((booking) => {
+            const card = templateEl.content.cloneNode(true);
 
-                card.querySelector('[data-field="booking-id"]').textContent =
-                    booking.id;
+            card.querySelector('[data-field="booking-id"]').textContent =
+                booking.id;
 
-                card.querySelector('[data-field="ticket-class"]').textContent =
-                    formatBookingValue(booking.ticketClass);
+            card.querySelector('[data-field="ticket-class"]').textContent =
+                formatBookingValue(booking.ticketClass);
 
-                card.querySelector('[data-field="selected-day"]').textContent =
-                    formatBookingValue(booking.selectedDay);
+            card.querySelector('[data-field="selected-day"]').textContent =
+                formatBookingValue(booking.selectedDay);
 
-                card.querySelector('[data-field="created"]').textContent =
-                    new Date(booking.createdAt).toLocaleString();
+            card.querySelector('[data-field="created"]').textContent =
+                booking.createdAt
+                    ? new Date(booking.createdAt).toLocaleString()
+                    : 'N/A';
 
-                const passengersEl = card.querySelector(
-                    '[data-field="passengers"]'
+            const passengersEl = card.querySelector(
+                '[data-field="passengers"]'
+            );
+
+            (booking.passengers || []).forEach((passenger) => {
+                const passengerEl = document.createElement('li');
+
+                passengerEl.textContent =
+                    `${passenger.firstName} ${passenger.lastName} - ` +
+                    `${passenger.email} - ${passenger.phone}`;
+
+                passengersEl.appendChild(passengerEl);
+            });
+
+            const ticketClassEl = card.querySelector(
+                '[data-field="ticket-class"]'
+            );
+
+            const updateButton = card.querySelector(
+                '[data-action="update-booking"]'
+            );
+
+            updateButton.addEventListener('click', async () => {
+                const currentTicketClass = booking.ticketClass;
+
+                const newTicketClass = window.prompt(
+                    'Enter the new ticket class (First, Standard, or Premium):',
+                    formatBookingValue(currentTicketClass)
                 );
 
-                booking.passengers.forEach((passenger) => {
-                    const passengerEl = document.createElement('li');
+                if (!newTicketClass) {
+                    return;
+                }
 
-                    passengerEl.textContent =
-                        `${passenger.firstName} ${passenger.lastName} - ` +
-                        `${passenger.email} - ${passenger.phone}`;
+                const ticketClassOptions = [
+                    'first',
+                    'standard',
+                    'premium'
+                ];
 
-                    passengersEl.appendChild(passengerEl);
-                });
+                const selectedTicketClass = newTicketClass
+                    .trim()
+                    .toLowerCase();
 
-                const bookingCard = card.querySelector('.booking-card');
-
-                const ticketClassEl = card.querySelector(
-                    '[data-field="ticket-class"]'
-                );
-
-                const updateButton = card.querySelector(
-                    '[data-action="update-booking"]'
-                );
-
-                updateButton.addEventListener('click', async () => {
-                    const currentTicketClass = booking.ticketClass;
-
-                    const newTicketClass = window.prompt(
-                        'Enter the new ticket class (First, Standard, or Premium):',
-                        formatBookingValue(currentTicketClass)
+                if (!ticketClassOptions.includes(selectedTicketClass)) {
+                    window.alert(
+                        'Please enter First, Standard, or Premium.'
                     );
+                    return;
+                }
 
-                    if (!newTicketClass) {
-                        return;
-                    }
-
-                    const ticketClassOptions = [
-                        'first',
-                        'standard',
-                        'premium'
-                    ];
-
-                    const selectedTicketClass = newTicketClass
-                        .trim()
-                        .toLowerCase();
-
-                    if (!ticketClassOptions.includes(selectedTicketClass)) {
-                        window.alert(
-                            'Please enter First, Standard, or Premium.'
-                        );
-                        return;
-                    }
-
-                    try {
-                        const response = await fetch(`/api/bookings/${booking.id}`, {
+                try {
+                    const response = await fetch(
+                        `/api/bookings/${booking.id}`,
+                        {
                             method: 'PUT',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -404,75 +424,149 @@ const hookBookingsCatalog = async () => {
                             body: JSON.stringify({
                                 ticketClass: selectedTicketClass
                             })
-                        });
-
-                        const data = await response.json();
-
-                        if (!response.ok) {
-                            throw new Error(
-                                data.message || 'Unable to update booking.'
-                            );
                         }
-
-                        booking.ticketClass = data.booking.ticketClass;
-
-                        ticketClassEl.textContent =
-                            formatBookingValue(data.booking.ticketClass);
-                    } catch (error) {
-                        window.alert(error.message);
-                    }
-                });
-
-                const deleteButton = card.querySelector(
-                    '[data-action="delete-booking"]'
-                );
-
-                deleteButton.addEventListener('click', async () => {
-                    const confirmed = window.confirm(
-                        'Are you sure you want to delete this booking?'
                     );
 
-                    if (!confirmed) {
-                        return;
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(
+                            data.message || 'Unable to update booking.'
+                        );
                     }
 
-                    try {
-                        const response = await fetch(`/api/bookings/${booking.id}`, {
-                            method: 'DELETE'
-                        });
+                    booking.ticketClass = data.booking.ticketClass;
 
-                        const data = await response.json();
-
-                        if (!response.ok) {
-                            throw new Error(data.message || 'Unable to delete booking.');
-                        }
-
-                        bookingCard.remove();
-                    } catch (error) {
-                        window.alert(error.message);
-                    }
-                });
-
-                fragment.appendChild(card);
+                    ticketClassEl.textContent =
+                        formatBookingValue(data.booking.ticketClass);
+                } catch (error) {
+                    window.alert(error.message);
+                }
             });
 
-            listEl.replaceChildren(fragment);
-        }
+            const deleteButton = card.querySelector(
+                '[data-action="delete-booking"]'
+            );
 
+            deleteButton.addEventListener('click', async () => {
+                const confirmed = window.confirm(
+                    'Are you sure you want to delete this booking?'
+                );
+
+                if (!confirmed) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `/api/bookings/${booking.id}`,
+                        {
+                            method: 'DELETE'
+                        }
+                    );
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(
+                            data.message || 'Unable to delete booking.'
+                        );
+                    }
+
+                    // Reload the current page and refresh pagination metadata.
+                    await loadPage(currentPage);
+                } catch (error) {
+                    window.alert(error.message);
+                }
+            });
+
+            fragment.appendChild(card);
+        });
+
+        listEl.replaceChildren(fragment);
+    };
+
+    const loadPage = async (page) => {
         if (loadingEl) {
-            loadingEl.hidden = true;
-        }
-    } catch (error) {
-        if (loadingEl) {
-            loadingEl.hidden = true;
+            loadingEl.hidden = false;
         }
 
         if (errorEl) {
-            errorEl.hidden = false;
-            errorEl.textContent =
-                'Unable to load bookings right now. Please try again in a moment.';
+            errorEl.hidden = true;
         }
+
+        if (prevBtn) {
+            prevBtn.disabled = true;
+        }
+
+        if (nextBtn) {
+            nextBtn.disabled = true;
+        }
+
+        try {
+            const params = new URLSearchParams();
+            params.set('page', page);
+            params.set('limit', PAGE_SIZE);
+
+            const response = await fetch(`/api/bookings?${params.toString()}`);
+
+            if (!response.ok) {
+                throw new Error(
+                    `Failed to load bookings (${response.status})`
+                );
+            }
+
+            const payload = await response.json();
+            const bookings = payload.bookings || [];
+            const pagination = payload.pagination;
+
+            if (!pagination) {
+                throw new Error('Booking pagination data is missing.');
+            }
+
+            // If deleting the last booking on the last page makes that
+            // page invalid, move back to the previous page automatically.
+            if (page > pagination.totalPages && page > 1) {
+                await loadPage(page - 1);
+                return;
+            }
+
+            currentPage = pagination.page;
+
+            renderBookings(bookings);
+            updatePaginationControls(pagination);
+        } catch (error) {
+            if (errorEl) {
+                errorEl.hidden = false;
+                errorEl.textContent =
+                    'Unable to load bookings right now. Please try again in a moment.';
+            }
+
+            if (paginationEl) {
+                paginationEl.hidden = true;
+            }
+        } finally {
+            if (loadingEl) {
+                loadingEl.hidden = true;
+            }
+        }
+    };
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                loadPage(currentPage - 1);
+            }
+        });
     }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            loadPage(currentPage + 1);
+        });
+    }
+
+    loadPage(currentPage);
 };
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -9,6 +9,25 @@ const getAllBookings = async () => {
   return Booking.find({}).lean();
 };
 
+const getPaginatedBookings = async ({ page, limit, email, isAdmin }) => {
+  const skip = (page - 1) * limit;
+
+  const filter = isAdmin
+    ? {}
+    : { 'passengers.email': email };
+
+  const [bookings, totalBookings] = await Promise.all([
+    Booking.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Booking.countDocuments(filter)
+  ]);
+
+  return { bookings, totalBookings };
+};
+
 const getBookingsByPassengerEmail = async (email) => {
   return Booking.find({
     'passengers.email': email
@@ -34,6 +53,7 @@ const deleteBooking = async (id) => {
 export {
   createBooking,
   getAllBookings,
+  getPaginatedBookings,
   getBookingsByPassengerEmail,
   updateBooking,
   deleteBooking,
