@@ -30,3 +30,11 @@ export async function findUserByEmail(email) {
 export async function verifyPassword(password, passwordHash) {
     return bcrypt.compare(password, passwordHash);
 }
+
+export async function getUserById(id) {
+    return User.findById(id).populate('role');
+}
+
+export async function getAllUsers() {
+    return User.find({}).populate('role');
+}

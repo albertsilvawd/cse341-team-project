@@ -19,6 +19,8 @@ export async function updateTrip(id, updateData) {
 export async function deleteTrip(id) {
   const query = mongoose.isValidObjectId(id) ? { $or: [{ id }, { _id: id }] } : { id };
   return Trip.findOneAndDelete(query);
+}
+
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
