@@ -3,6 +3,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const feedback = document.querySelector('#trip-feedback');
   const cardTemplate = document.querySelector('#trip-card-template');
   const editTemplate = document.querySelector('#trip-edit-template');
+
+  // Pagination elements
+  const prevBtn = document.querySelector('#prev-page-btn');
+  const nextBtn = document.querySelector('#next-page-btn');
+  const pageIndicator = document.querySelector('#page-indicator');
+
+  let currentPage = 1;
+  const limit = 2;
+  let totalPages = 1;
   let tripsMap = new Map();
   let availableStations = [];
   let availableSchedules = [];
@@ -18,6 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderList() {
+    if (tripsMap.size === 0) {
+      tripsContainer.innerHTML = '<p>No trips available on this page.</p>';
+      return;
+    }
+
     const fragment = document.createDocumentFragment();
     for (const trip of tripsMap.values()) {
       const clone = cardTemplate.content.cloneNode(true);
@@ -35,6 +49,22 @@ document.addEventListener('DOMContentLoaded', () => {
       fragment.append(clone);
     }
     tripsContainer.replaceChildren(fragment);
+  }
+
+  function updatePaginationControls(pagination) {
+    if (!pagination) {
+      prevBtn.disabled = currentPage <= 1;
+      nextBtn.disabled = true;
+      pageIndicator.textContent = `Page ${currentPage}`;
+      return;
+    }
+
+    currentPage = Number(pagination.page) || 1;
+    totalPages = Number(pagination.totalPages) || 1;
+
+    prevBtn.disabled = !pagination.hasPreviousPage && currentPage <= 1;
+    nextBtn.disabled = !pagination.hasNextPage && currentPage >= totalPages;
+    pageIndicator.textContent = `Page ${currentPage} of ${totalPages} (${pagination.totalItems || 0} total)`;
   }
 
   async function loadAuxiliaryData() {
@@ -57,20 +87,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function loadTrips() {
-    try {
-      const res = await fetch('/api/trips');
-      if (!res.ok) throw new Error('Could not retrieve trips from server.');
+ async function loadTrips(page = 1) {
+  try {
+    // Indicate loading without wiping the container's height
+    tripsContainer.style.opacity = '0.5';
+    tripsContainer.style.pointerEvents = 'none';
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
 
-      const payload = await res.json();
-      const tripsArray = Array.isArray(payload) ? payload : (payload.trips || payload.data || []);
+    const res = await fetch(`/api/trips?page=${page}&limit=${limit}`);
+    if (!res.ok) throw new Error('Could not retrieve trips from server.');
 
-      tripsMap = new Map(tripsArray.map((t) => [String(getIdentifier(t)), t]));
-      renderList();
-    } catch (err) {
-      showMessage(err.message, true);
-    }
+    const payload = await res.json();
+    const tripsArray = Array.isArray(payload) ? payload : (payload.data || payload.trips || []);
+    const pagination = payload.pagination || null;
+
+    tripsMap = new Map(tripsArray.map((t) => [String(getIdentifier(t)), t]));
+    renderList();
+    updatePaginationControls(pagination);
+  } catch (err) {
+    showMessage(err.message, true);
+  } finally {
+    // Restore full opacity and interactivity
+    tripsContainer.style.opacity = '1';
+    tripsContainer.style.pointerEvents = 'auto';
   }
+}
 
   function populateSelect(selectEl, items, selectedValue, defaultLabel) {
     selectEl.innerHTML = `<option value="">${defaultLabel}</option>`;
@@ -86,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
       selectEl.appendChild(opt);
     });
 
-    // If current value is not in fetched list, retain it as an option
     if (selectedValue && !Array.from(selectEl.options).some(o => o.value === selectedValue)) {
       const opt = document.createElement('option');
       opt.value = selectedValue;
@@ -146,9 +187,9 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(err.message || 'Failed to update trip.');
         }
         const updated = await response.json();
-        tripsMap.set(tripId, updated);
-        renderList();
-        showMessage(`Successfully updated "${updated.name}".`);
+        showMessage(`Successfully updated "${updated.name || updateData.name}".`);
+        // Re-fetch current page to keep display and pagination counts in sync
+        await loadTrips(currentPage);
       } catch (error) {
         showMessage(error.message, true);
       }
@@ -157,6 +198,20 @@ document.addEventListener('DOMContentLoaded', () => {
     card.replaceWith(clone);
   }
 
+  // Navigation handlers
+  prevBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      loadTrips(currentPage - 1);
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentPage < totalPages) {
+      loadTrips(currentPage + 1);
+    }
+  });
+
+  // Action delegation (edit, cancel, delete)
   tripsContainer.addEventListener('click', async (e) => {
     const button = e.target.closest('button[data-action]');
     if (!button) return;
@@ -169,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (button.dataset.action === 'cancel') {
       renderList();
     } else if (button.dataset.action === 'delete') {
-      if (!window.confirm(`Are you sure you want to delete the trip "${trip.name}"?`)) {
+      if (!window.confirm(`Are you sure you want to delete the trip "${trip?.name || 'this trip'}"?`)) {
         return;
       }
       try {
@@ -180,9 +235,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const err = await response.json();
           throw new Error(err.message || 'Failed to delete trip.');
         }
-        tripsMap.delete(tripId);
-        renderList();
-        showMessage(`Trip "${trip.name}" was deleted.`);
+        showMessage(`Trip was successfully deleted.`);
+        
+        // If we deleted the last item on a page greater than 1, step back one page
+        if (tripsMap.size === 1 && currentPage > 1) {
+          currentPage -= 1;
+        }
+        await loadTrips(currentPage);
       } catch (error) {
         showMessage(error.message, true);
       }
@@ -191,6 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   (async () => {
     await loadAuxiliaryData();
-    await loadTrips();
+    await loadTrips(currentPage);
   })();
 });

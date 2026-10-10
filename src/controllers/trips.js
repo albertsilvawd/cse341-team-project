@@ -4,7 +4,8 @@ import {
   getTripById as findTripById,
   getAllTrips as findAllTrips,
   updateTrip as updateTripModel,
-  deleteTrip as deleteTripModel
+  deleteTrip as deleteTripModel,
+  getPaginatedTrips as findPaginatedTrips
 } from "../models/trips.js";
 
 const DEFAULT_PAGE = 1;
