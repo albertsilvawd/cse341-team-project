@@ -17,17 +17,15 @@ import {
 } from '../controllers/bookings.js';
 import {
     getAllUsersApi,
-    getUserByIdApi
+    getUserByIdApi,
+    updateUserApi,
+    deleteUserApi
 } from '../controllers/users.js';
 import { getAllTicketClasses } from '../controllers/ticket-classes.js';
 import { requireApiLogin, requireApiRole } from '../middleware/auth.js';
 
 const router = Router();
 
-// Stations
-router.get('/stations', getAllStationsApi);
-router.get('/stations/:id', getStationByIdApi);
- 
 // Stations
 router.get('/stations', getAllStationsApi);
 router.get('/stations/:id', getStationByIdApi);
@@ -236,7 +234,6 @@ router.get('/trips/:id', getTripById);
 router.put('/trips/:id', requireApiRole('admin'), updateTripApi);
 router.delete('/trips/:id', requireApiRole('admin'), deleteTripApi);
 
-
 router.get('/ticket-classes', getAllTicketClasses);
 
 /**
@@ -277,8 +274,65 @@ router.get('/ticket-classes', getAllTicketClasses);
  *         description: User not found
  *       500:
  *         description: Server error
+ *   put:
+ *     summary: Update a user
+ *     description: Administrators can update any user, including their role. A standard signed-in user can update only their own displayName.
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               displayName:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *       400:
+ *         description: Invalid role, or no valid fields provided
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden (not the owner/not an admin, or a non-admin tried to change a role)
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ *   delete:
+ *     summary: Delete a user
+ *     description: Administrators can delete any user. A standard signed-in user can delete only their own account.
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden (not the owner and not an admin)
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
  */
 router.get('/users', requireApiRole('admin'), getAllUsersApi);
 router.get('/users/:id', requireApiLogin, getUserByIdApi);
+router.put('/users/:id', requireApiLogin, updateUserApi);
+router.delete('/users/:id', requireApiLogin, deleteUserApi);
 
 export default router;

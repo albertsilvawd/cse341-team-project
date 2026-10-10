@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, inject } from 'vitest';
+import mongoose from 'mongoose';
 import { closeDb, connectToDb, getDb } from '../src/db/connect.js';
 import { closeMongoose, connectToMongoose } from '../src/db/mongoose.js';
 import { initializeDatabase } from '../src/db/initialize.js';
@@ -25,6 +26,12 @@ beforeEach(async () => {
   const db = getDb();
   await db.dropDatabase();
   await initializeDatabase(db);
+  // dropDatabase() wipes indexes along with the data, so Mongoose's unique
+  // constraints (e.g. User.email, User.username) need rebuilding after every
+  // reset, or duplicate-key checks silently stop working.
+  await Promise.all(
+    mongoose.modelNames().map((modelName) => mongoose.model(modelName).syncIndexes())
+  );
 });
 
 afterAll(async () => {

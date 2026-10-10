@@ -38,3 +38,11 @@ export async function getUserById(id) {
 export async function getAllUsers() {
     return User.find({}).populate('role');
 }
+
+export async function updateUser(id, data) {
+    return User.findByIdAndUpdate(id, data, { new: true }).populate('role');
+}
+
+export async function deleteUser(id) {
+    return User.findByIdAndDelete(id);
+}
