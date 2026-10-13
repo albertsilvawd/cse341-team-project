@@ -206,6 +206,32 @@ const getAllBookingsApi = async (req, res, next) => {
   }
 };
 
+const getBookingByIdApi = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await getBookingById(id);
+
+    if (!booking) {
+      return res.status(404).json({
+        message: 'Booking not found'
+      });
+    }
+
+    if (!canAccessBooking(booking, req.user)) {
+      return res.status(403).json({
+        message: 'Forbidden'
+      });
+    }
+
+    return res.status(200).json({
+      booking
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const updateBookingApi = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -305,6 +331,7 @@ export {
   bookingPage,
   processBookingRequest,
   getAllBookingsApi,
+  getBookingByIdApi,
   updateBookingApi,
   deleteBookingApi,
   bookingConfirmationPage,

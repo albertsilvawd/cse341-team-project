@@ -12,6 +12,7 @@ import {
 } from '../controllers/trips.js';
 import {
     getAllBookingsApi,
+    getBookingByIdApi,
     updateBookingApi,
     deleteBookingApi
 } from '../controllers/bookings.js';
@@ -139,6 +140,29 @@ router.get('/bookings', requireApiLogin, getAllBookingsApi);
 /**
  * @openapi
  * /api/bookings/{id}:
+ *   get:
+ *     summary: Get a single booking by ID
+ *     description: Admin users can retrieve any booking. Authenticated non-admin users can retrieve a booking only if their email matches one of the passengers.
+ *     tags: [Bookings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking reference ID
+ *     responses:
+ *       200:
+ *         description: Booking retrieved successfully
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: User is not authorized to view this booking
+ *       404:
+ *         description: Booking not found
+ *       500:
+ *         description: Server error
+ *
  *   put:
  *     summary: Update a booking
  *     description: Admin users can update any booking. Authenticated non-admin users can update a booking only if their email matches one of the passengers.
@@ -176,7 +200,31 @@ router.get('/bookings', requireApiLogin, getAllBookingsApi);
  *         description: Booking not found
  *       500:
  *         description: Server error
+ *
+ *   delete:
+ *     summary: Delete a booking
+ *     description: Admin users can delete any booking. Authenticated non-admin users can delete a booking only if their email matches one of the passengers.
+ *     tags: [Bookings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking reference ID
+ *     responses:
+ *       200:
+ *         description: Booking deleted successfully
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: User is not authorized to delete this booking
+ *       404:
+ *         description: Booking not found
+ *       500:
+ *         description: Server error
  */
+router.get('/bookings/:id', requireApiLogin, getBookingByIdApi);
 router.put('/bookings/:id', requireApiLogin, updateBookingApi);
 
 /**

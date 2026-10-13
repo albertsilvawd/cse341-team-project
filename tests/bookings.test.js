@@ -121,4 +121,106 @@ describe('GET /api/bookings', () => {
       hasNextPage: false
     });
   });
+
+  describe('GET /api/bookings/:id', () => {
+    test('returns 401 when the user is not authenticated', async () => {
+      const response = await request(app)
+        .get('/api/bookings/booking-detail');
+
+      expect(response.status).toBe(401);
+    });
+
+    test('allows an admin to retrieve any booking', async () => {
+      const { user, password } = await createTestUser({
+        role: 'admin',
+        username: 'booking-detail-admin',
+        email: 'booking-detail-admin@example.com'
+      });
+
+      await createTestBooking(
+        'booking-detail-admin-test',
+        'customer@example.com'
+      );
+
+      const agent = await loginAsTestUser(app, {
+        email: user.email,
+        password
+      });
+
+      const response = await agent
+        .get('/api/bookings/booking-detail-admin-test');
+
+      expect(response.status).toBe(200);
+      expect(response.body.booking.id).toBe('booking-detail-admin-test');
+      expect(response.body.booking.passengers[0].email)
+        .toBe('customer@example.com');
+    });
+
+    test('allows a customer to retrieve their own booking', async () => {
+      const { user, password } = await createTestUser({
+        role: 'customer',
+        username: 'booking-detail-customer',
+        email: 'booking-detail-customer@example.com'
+      });
+
+      await createTestBooking(
+        'booking-detail-own',
+        user.email
+      );
+
+      const agent = await loginAsTestUser(app, {
+        email: user.email,
+        password
+      });
+
+      const response = await agent
+        .get('/api/bookings/booking-detail-own');
+
+      expect(response.status).toBe(200);
+      expect(response.body.booking.id).toBe('booking-detail-own');
+    });
+
+    test('forbids a customer from retrieving another customer booking', async () => {
+      const { user, password } = await createTestUser({
+        role: 'customer',
+        username: 'booking-detail-outsider',
+        email: 'booking-detail-outsider@example.com'
+      });
+
+      await createTestBooking(
+        'booking-detail-private',
+        'another-customer@example.com'
+      );
+
+      const agent = await loginAsTestUser(app, {
+        email: user.email,
+        password
+      });
+
+      const response = await agent
+        .get('/api/bookings/booking-detail-private');
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Forbidden');
+    });
+
+    test('returns 404 when the booking does not exist', async () => {
+      const { user, password } = await createTestUser({
+        role: 'customer',
+        username: 'booking-detail-missing',
+        email: 'booking-detail-missing@example.com'
+      });
+
+      const agent = await loginAsTestUser(app, {
+        email: user.email,
+        password
+      });
+
+      const response = await agent
+        .get('/api/bookings/nonexistent-booking');
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Booking not found');
+    });
+  });
 });
