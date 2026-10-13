@@ -267,3 +267,134 @@ describe('DELETE /api/bookings/:id', () => {
     expect(deletedBooking).toBeNull();
   });
 });
+
+describe('POST /api/bookings', () => {
+  const validBookingData = {
+    scheduleId: 1,
+    tripId: 'alpine-panorama',
+    ticketClass: 'standard',
+    selectedDay: '2026-10-20',
+    passengers: [
+      {
+        firstName: 'Test',
+        lastName: 'Passenger',
+        email: 'passenger@example.com',
+        phone: '09123456789'
+      }
+    ]
+  };
+
+  test('returns 401 when the user is not authenticated', async () => {
+    const response = await request(app)
+      .post('/api/bookings')
+      .send(validBookingData);
+
+    expect(response.status).toBe(401);
+  });
+
+  test('creates a booking and persists it in the database', async () => {
+    const { user, password } = await createTestUser({
+      role: 'customer',
+      username: 'booking-creator',
+      email: 'creator@example.com'
+    });
+
+    const agent = await loginAsTestUser(app, {
+      email: user.email,
+      password
+    });
+
+    const response = await agent
+      .post('/api/bookings')
+      .send(validBookingData);
+
+    expect(response.status).toBe(201);
+    expect(response.body.booking).toMatchObject({
+      scheduleId: validBookingData.scheduleId,
+      tripId: validBookingData.tripId,
+      ticketClass: validBookingData.ticketClass,
+      selectedDay: validBookingData.selectedDay
+    });
+
+    const savedBooking = await Booking.findOne({
+      id: response.body.booking.id
+    }).lean();
+
+    expect(savedBooking).not.toBeNull();
+    expect(savedBooking.passengers[0]).toMatchObject({
+      firstName: 'Test',
+      lastName: 'Passenger',
+      email: 'passenger@example.com',
+      phone: '09123456789'
+    });
+  });
+
+  test('rejects an invalid ticket class without saving a booking', async () => {
+    const { user, password } = await createTestUser({
+      role: 'customer',
+      username: 'invalid-class-user',
+      email: 'invalid-class@example.com'
+    });
+
+    const agent = await loginAsTestUser(app, {
+      email: user.email,
+      password
+    });
+
+    const response = await agent
+      .post('/api/bookings')
+      .send({
+        ...validBookingData,
+        ticketClass: 'economy'
+      });
+
+    expect(response.status).toBe(400);
+    expect(await Booking.countDocuments()).toBe(0);
+  });
+
+  test('rejects a nonpositive schedule ID without saving a booking', async () => {
+    const { user, password } = await createTestUser({
+      role: 'customer',
+      username: 'invalid-schedule-user',
+      email: 'invalid-schedule@example.com'
+    });
+
+    const agent = await loginAsTestUser(app, {
+      email: user.email,
+      password
+    });
+
+    const response = await agent
+      .post('/api/bookings')
+      .send({
+        ...validBookingData,
+        scheduleId: 0
+      });
+
+    expect(response.status).toBe(400);
+    expect(await Booking.countDocuments()).toBe(0);
+  });
+
+  test('rejects an impossible selected date without saving a booking', async () => {
+    const { user, password } = await createTestUser({
+      role: 'customer',
+      username: 'invalid-date-user',
+      email: 'invalid-date@example.com'
+    });
+
+    const agent = await loginAsTestUser(app, {
+      email: user.email,
+      password
+    });
+
+    const response = await agent
+      .post('/api/bookings')
+      .send({
+        ...validBookingData,
+        selectedDay: '2026-02-30'
+      });
+
+    expect(response.status).toBe(400);
+    expect(await Booking.countDocuments()).toBe(0);
+  });
+});

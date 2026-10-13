@@ -11,6 +11,7 @@ import {
     deleteTripApi
 } from '../controllers/trips.js';
 import {
+    createBookingApi,
     getAllBookingsApi,
     updateBookingApi,
     deleteBookingApi
@@ -135,6 +136,66 @@ router.get('/stations/:id', getStationByIdApi);
  *         description: Server error
  */
 router.get('/bookings', requireApiLogin, getAllBookingsApi);
+
+/**
+ * @openapi
+ * /api/bookings:
+ *   post:
+ *     summary: Create a booking
+ *     description: Requires authentication. Creates a booking and returns the saved record.
+ *     tags: [Bookings]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - scheduleId
+ *               - tripId
+ *               - ticketClass
+ *               - selectedDay
+ *               - passengers
+ *             properties:
+ *               scheduleId:
+ *                 type: integer
+ *                 example: 1
+ *               tripId:
+ *                 type: string
+ *                 example: alpine-panorama
+ *               ticketClass:
+ *                 type: string
+ *                 enum: [first, standard, premium]
+ *               selectedDay:
+ *                 type: string
+ *                 format: date
+ *                 example: '2026-10-20'
+ *               passengers:
+ *                 type: array
+ *                 minItems: 1
+ *                 items:
+ *                   type: object
+ *                   required: [firstName, lastName, email, phone]
+ *                   properties:
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *     responses:
+ *       201:
+ *         description: Booking created successfully
+ *       400:
+ *         description: Invalid booking data
+ *       401:
+ *         description: Authentication required
+ *       500:
+ *         description: Server error
+ */
+router.post('/bookings', requireApiLogin, createBookingApi);
 
 /**
  * @openapi
