@@ -160,6 +160,102 @@ const processBookingRequest = async (req, res, next) => {
   }
 };
 
+const isValidBookingDate = (value) => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+};
+
+const createBookingApi = async (req, res, next) => {
+  try {
+    const {
+      scheduleId,
+      tripId,
+      ticketClass,
+      selectedDay,
+      passengers
+    } = req.body;
+
+    const allowedTicketClasses = ['first', 'standard', 'premium'];
+
+    if (!Number.isInteger(scheduleId) || scheduleId < 1) {
+      return res.status(400).json({
+        message: 'scheduleId must be a positive integer.'
+      });
+    }
+
+    if (typeof tripId !== 'string' || !tripId.trim()) {
+      return res.status(400).json({
+        message: 'tripId is required.'
+      });
+    }
+
+    if (!allowedTicketClasses.includes(ticketClass)) {
+      return res.status(400).json({
+        message: 'Invalid ticket class. Use first, standard, or premium.'
+      });
+    }
+
+    if (!isValidBookingDate(selectedDay)) {
+      return res.status(400).json({
+        message: 'selectedDay must be a valid YYYY-MM-DD date.'
+      });
+    }
+
+    if (!Array.isArray(passengers) || passengers.length === 0) {
+      return res.status(400).json({
+        message: 'At least one passenger is required.'
+      });
+    }
+
+    const requiredPassengerFields = [
+      'firstName',
+      'lastName',
+      'email',
+      'phone'
+    ];
+
+    const hasInvalidPassenger = passengers.some((passenger) =>
+      !passenger ||
+      requiredPassengerFields.some((field) =>
+        typeof passenger[field] !== 'string' ||
+        !passenger[field].trim()
+      )
+    );
+
+    if (hasInvalidPassenger) {
+      return res.status(400).json({
+        message: 'Each passenger must have a first name, last name, email, and phone.'
+      });
+    }
+
+    const savedBooking = await createBooking({
+      id: generateConfirmationCode(),
+      scheduleId,
+      tripId: tripId.trim(),
+      ticketClass,
+      selectedDay,
+      passengers
+    });
+
+    return res.status(201).json({
+      booking: savedBooking
+    });
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        message: error.message
+      });
+    }
+
+    return next(error);
+  }
+};
 
 const getAllBookingsApi = async (req, res, next) => {
   try {
@@ -304,6 +400,7 @@ const bookingsAdminPage = (req, res) => {
 export {
   bookingPage,
   processBookingRequest,
+  createBookingApi,
   getAllBookingsApi,
   updateBookingApi,
   deleteBookingApi,
