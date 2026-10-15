@@ -3,6 +3,7 @@ import { getDb } from "../db/connect.js";
 import {
   getTripById as findTripById,
   getAllTrips as findAllTrips,
+  getPaginatedTrips as findPaginatedTrips,
   updateTrip as updateTripModel,
   deleteTrip as deleteTripModel
 } from "../models/trips.js";
